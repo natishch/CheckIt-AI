@@ -61,6 +61,23 @@ cp .env.example .env
 # Edit .env with your API keys
 ```
 
+**Important: Google Search API Quota Limits**
+
+The Google Custom Search JSON API has strict usage limits:
+- **Free tier**: 100 queries per day
+- **Paid tier**: Up to 10,000 queries per day (requires billing)
+
+To handle quota limitations, this project includes two protective measures:
+
+1. **Automatic Caching**: All search results are cached for 24 hours (configurable via `CACHE_TTL_HOURS`). This dramatically reduces API calls during development and demos.
+
+2. **DuckDuckGo Fallback**: When the Google API quota is exceeded (HTTP 403/429 errors), the system can automatically fall back to DuckDuckGo search. Enable this in `.env`:
+   ```bash
+   USE_DUCKDUCKGO_BACKUP=true
+   ```
+
+**Recommendation for Development**: Keep caching enabled (default) and use `USE_DUCKDUCKGO_BACKUP=true` to ensure your demo works even if you hit quota limits.
+
 ### Running Tests
 
 ```bash
@@ -90,23 +107,18 @@ uv run streamlit run src/check_it_ai/app/streamlit_app.py
 
 ## Working with AI Agents/Assistants
 
-When using AI coding assistants (like Claude Code, GitHub Copilot, etc.) to work on this project, **start by having them read the documentation** to understand what's already been implemented:
-
-### Essential Context Files
-
-1. **[docs/INITIALIZATION_SUMMARY.md](docs/INITIALIZATION_SUMMARY.md)** - Overview of completed initialization work
-2. **[docs/technical_design.pdf](docs/technical_design.pdf)** - Complete system architecture (Section 5 has the full structure)
-3. **[docs/tasks_playbook.pdf](docs/tasks_playbook.pdf)** - Task breakdown and implementation guidance
-4. **[data/raw/impl-tasks-with-priority-and-dependencies.json](data/raw/impl-tasks-with-priority-and-dependencies.json)** - Structured task definitions
-5. **[data/raw/impl-tasks-with-prompts.json](data/raw/impl-tasks-with-prompts.json)** - Implementation prompts for each task
+When using AI coding assistants (like Claude Code, GitHub Copilot, etc.) to work on this project, **start by having them read the documentation** to understand what's already been implemented.
 
 ### Recommended AI Agent Prompt
 
 ```
-Please read the following files to understand the current state of the check-it-ai project:
-1. docs/INITIALIZATION_SUMMARY.md - What's already been set up
-2. docs/technical_design.pdf - The complete architecture (focus on Section 5 for structure)
-3. [Specific task file from data/raw/ if working on a specific task]
+Please read all the documentation files in the docs/ folder to understand the current state of the check-it-ai project:
+
+- docs/INITIALIZATION_SUMMARY.md - Initial project setup
+- docs/AH_02_CORE_SCHEMAS_SUMMARY.md - Core Pydantic schemas and state
+- docs/AH_03_04_CONFIG_CACHING_GOOGLE_SEARCH.md - Configuration and Google Search tool
+- docs/technical_design.pdf - Complete system architecture
+- docs/tasks_playbook.pdf - Task breakdown and guidance
 
 Important: This project uses the package name `check_it_ai` (not `agentic_historian`).
 ```
