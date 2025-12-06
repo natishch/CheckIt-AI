@@ -1,0 +1,95 @@
+{
+  "tasks": [
+    {
+      "task_id": "AH-01",
+      "task_name": "Project Initialization (uv + repo skeleton)",
+      "priority": "P0",
+      "dependencies": [],
+      "description": "Initialize the repository using uv, create the full folder/file structure, and add baseline tooling configs (ruff, mypy, pytest) plus .env.example. Ensure the project installs and smoke tests run."
+    },
+    {
+      "task_id": "AH-02",
+      "task_name": "Core Schemas & Shared LangGraph State (Pydantic)",
+      "priority": "P0",
+      "dependencies": ["AH-01"],
+      "description": "Implement strict Pydantic models for SearchResult, EvidenceBundle, Findings, Citations, and the shared AgentState for the graph. Include validators and test coverage."
+    },
+    {
+      "task_id": "AH-03",
+      "task_name": "Config + Logging + Caching (Demo Reliability)",
+      "priority": "P0",
+      "dependencies": ["AH-01", "AH-02"],
+      "description": "Centralize environment configuration, add structured logging, and implement a simple disk cache for search queries to reduce quota usage and stabilize demos."
+    },
+    {
+      "task_id": "AH-04",
+      "task_name": "Google Custom Search Tool Client (httpx, no scraping)",
+      "priority": "P0",
+      "dependencies": ["AH-01", "AH-02", "AH-03"],
+      "description": "Implement a robust Google Custom Search JSON API client. Normalize responses to SearchResult. Support timeouts and typed exceptions. No page fetching/scraping."
+    },
+    {
+      "task_id": "AH-05",
+      "task_name": "Router Node (routing + explanation metadata)",
+      "priority": "P0",
+      "dependencies": ["AH-02"],
+      "description": "Implement deterministic routing: fact_check vs clarify vs out_of_scope. Save decision rationale into run_metadata for UI display."
+    },
+    {
+      "task_id": "AH-06",
+      "task_name": "Researcher Node (query expansion + dedupe + cache)",
+      "priority": "P0",
+      "dependencies": ["AH-03", "AH-04", "AH-05"],
+      "description": "Expand the user query into up to 3 search queries, call the Google tool, merge and dedupe results, and store SearchResult list in state."
+    },
+    {
+      "task_id": "AH-07",
+      "task_name": "Fact Analyst Node (evidence pack + verdict + contradictions)",
+      "priority": "P0",
+      "dependencies": ["AH-02", "AH-06"],
+      "description": "Convert SearchResults into a compact EvidenceBundle (E1..En), extract findings, score credibility, detect contradictions, and assign an overall verdict."
+    },
+    {
+      "task_id": "AH-08",
+      "task_name": "Writer Node (LoRA model + citation enforcement)",
+      "priority": "P0",
+      "dependencies": ["AH-02", "AH-07"],
+      "description": "Load base model + LoRA adapter (PEFT) and generate a final answer constrained to evidence. Enforce evidence-ID citations and safe fallback when missing."
+    },
+    {
+      "task_id": "AH-09",
+      "task_name": "LangGraph Assembly + CLI Runner",
+      "priority": "P0",
+      "dependencies": ["AH-05", "AH-06", "AH-07", "AH-08"],
+      "description": "Build the LangGraph pipeline graph and expose run_graph(). Add a small CLI runner for debugging without Streamlit."
+    },
+    {
+      "task_id": "AH-10",
+      "task_name": "Streamlit UI (Chat + Evidence Panel)",
+      "priority": "P0",
+      "dependencies": ["AH-09"],
+      "description": "Implement the Streamlit chat UI, plus an evidence panel showing E1..En with URLs, verdict badge, confidence, and run metadata. Include OFFLINE_MODE toggle."
+    },
+    {
+      "task_id": "AH-11",
+      "task_name": "Training Pipeline (TruthfulQA → LoRA SFT)",
+      "priority": "P1",
+      "dependencies": ["AH-01", "AH-02", "AH-08"],
+      "description": "Prepare TruthfulQA instruction pairs and fine-tune a LoRA adapter; save adapters + logs."
+    },
+    {
+      "task_id": "AH-12",
+      "task_name": "Evaluation Harness (Offline + E2E)",
+      "priority": "P1",
+      "dependencies": ["AH-09", "AH-11"],
+      "description": "Add offline eval on TruthfulQA and an end-to-end evaluation runner for curated historical queries. Output JSONL results and summary stats."
+    },
+    {
+      "task_id": "AH-13",
+      "task_name": "Testing + CI (uv-based quality gate)",
+      "priority": "P1",
+      "dependencies": ["AH-01", "AH-02", "AH-04", "AH-09"],
+      "description": "Add unit tests and GitHub Actions CI running uv sync, ruff, mypy (optional strictness), and pytest. Ensure all network calls are mocked."
+    }
+  ]
+}
