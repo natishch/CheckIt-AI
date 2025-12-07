@@ -1,32 +1,85 @@
-"""
-Configuration module for check-it-ai application.
-Loads environment variables and provides centralized configuration.
-"""
+"""Configuration module using pydantic-settings for type-safe env variable loading."""
 
-import os
 from pathlib import Path
 
-from dotenv import load_dotenv
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Load environment variables from .env file
-load_dotenv()
 
-# Project Root
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+class Settings(BaseSettings):
+    """Application settings loaded from environment variables.
 
-# Google Custom Search API Configuration
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
-GOOGLE_CSE_ID = os.getenv("GOOGLE_CSE_ID", "")
+    Uses pydantic-settings for type-safe configuration with validation.
+    Automatically loads from .env file if present.
+    """
 
-# Application Configuration
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-CACHE_DIR = Path(os.getenv("CACHE_DIR", PROJECT_ROOT / "cache"))
-MODEL_DIR = Path(os.getenv("MODEL_DIR", PROJECT_ROOT / "models"))
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
 
-# Create directories if they don't exist
-CACHE_DIR.mkdir(parents=True, exist_ok=True)
-MODEL_DIR.mkdir(parents=True, exist_ok=True)
+    # Google Custom Search API Configuration
+    google_api_key: str = Field(
+        default="",
+        description="Google Custom Search JSON API key",
+    )
+    google_cse_id: str = Field(
+        default="",
+        description="Google Custom Search Engine ID (Programmable Search Engine)",
+    )
 
-# LLM Configuration
-MAX_SEARCH_RESULTS = int(os.getenv("MAX_SEARCH_RESULTS", "10"))
-SEARCH_TIMEOUT = int(os.getenv("SEARCH_TIMEOUT", "30"))
+    # Search Engine Fallback Configuration
+    use_duckduckgo_backup: bool = Field(
+        default=False,
+        description="Enable DuckDuckGo fallback when Google quota is exceeded",
+    )
+
+    # Application Configuration
+    log_level: str = Field(
+        default="INFO",
+        description="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+    )
+
+    # Directory Configuration
+    cache_dir: Path = Field(
+        default=Path("./cache"),
+        description="Directory for caching search results",
+    )
+    model_dir: Path = Field(
+        default=Path("./models"),
+        description="Directory for storing model files and LoRA adapters",
+    )
+
+    # Search Configuration
+    max_search_results: int = Field(
+        default=10,
+        ge=1,
+        le=100,
+        description="Maximum number of search results to retrieve per query",
+    )
+    search_timeout: int = Field(
+        default=30,
+        ge=1,
+        le=120,
+        description="Timeout in seconds for search API requests",
+    )
+
+    # Cache Configuration
+    cache_ttl_hours: int = Field(
+        default=24,
+        ge=1,
+        description="Time-to-live for cached search results in hours",
+    )
+
+    def __init__(self, **kwargs):
+        """Initialize settings and create necessary directories."""
+        super().__init__(**kwargs)
+        # Create directories if they don't exist
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.model_dir.mkdir(parents=True, exist_ok=True)
+
+
+# Global settings instance
+settings = Settings()
