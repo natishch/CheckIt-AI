@@ -44,6 +44,10 @@ class Settings(BaseSettings):
         default=False,
         description="Enable DuckDuckGo fallback when Google quota is exceeded",
     )
+    use_fact_check_api: bool = Field(
+        default=True,
+        description="Enable Google Fact Check Tools API for professional fact-checks",
+    )
 
     # Application Configuration
     log_level: str = Field(
@@ -84,6 +88,16 @@ class Settings(BaseSettings):
     router_debug: bool = True          # controls extra logging & UI debug panel
     offline_mode: bool = False          # optional, for researcher/offline demos
     trusted_domains_only: bool = False  # optional, for researcher's site: filters
+
+    # Language Configuration
+    default_language: str = Field(
+        default="en",
+        description="Default language code (ISO 639-1) for fact-check searches (e.g., 'en', 'he', 'ar', 'es')",
+    )
+    fallback_language: str = Field(
+        default="en",
+        description="Fallback language code when no results found in default language",
+    )
 
     def __init__(self, **kwargs):
         """Initialize settings and create necessary directories."""
