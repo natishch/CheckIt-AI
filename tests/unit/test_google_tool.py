@@ -33,7 +33,6 @@ class TestGoogleSearchClient:
             api_key="test_api_key",
             cse_id="test_cse_id",
             cache=mock_cache,
-            use_fallback=False,
         )
 
     @pytest.fixture
@@ -60,7 +59,6 @@ class TestGoogleSearchClient:
         """Test that client initializes with correct parameters."""
         assert client.api_key == "test_api_key"
         assert client.cse_id == "test_cse_id"
-        assert client.use_fallback is False
         assert client.cache is not None
 
     def test_search_with_empty_query_raises_error(self, client: GoogleSearchClient):
@@ -111,96 +109,41 @@ class TestGoogleSearchClient:
         assert results[0].rank == 1
         assert results[1].rank == 2
 
-    @patch("httpx.Client")
+    @patch("check_it_ai.tools.google_search.make_api_request")
     def test_quota_error_403(
         self,
-        mock_httpx_client: Mock,
+        mock_make_request: Mock,
         client: GoogleSearchClient,
     ):
         """Test that 403 status code raises QuotaError."""
-        # Mock 403 response
-        mock_response = Mock()
-        mock_response.status_code = 403
-        mock_response.json.return_value = {
-            "error": {"message": "Quota exceeded for quota metric"}
-        }
+        # Mock quota exceeded error from shared utility
+        from check_it_ai.tools._http_utils import QuotaExceededError
 
-        mock_client_instance = MagicMock()
-        mock_client_instance.get.return_value = mock_response
-        mock_httpx_client.return_value.__enter__.return_value = mock_client_instance
+        mock_make_request.side_effect = QuotaExceededError(
+            "API quota exceeded: Quota exceeded for quota metric (status: 403)"
+        )
 
-        # Verify QuotaError is raised
-        with pytest.raises(QuotaError, match="Google API quota exceeded"):
+        # Verify exception is raised (QuotaError is an alias for QuotaExceededError)
+        with pytest.raises(QuotaExceededError, match="API quota exceeded"):
             client.search("test query")
 
-    @patch("httpx.Client")
+    @patch("check_it_ai.tools.google_search.make_api_request")
     def test_quota_error_429(
         self,
-        mock_httpx_client: Mock,
+        mock_make_request: Mock,
         client: GoogleSearchClient,
     ):
         """Test that 429 status code raises QuotaError."""
-        # Mock 429 response
-        mock_response = Mock()
-        mock_response.status_code = 429
-        mock_response.json.return_value = {
-            "error": {"message": "Rate limit exceeded"}
-        }
+        # Mock quota exceeded error from shared utility
+        from check_it_ai.tools._http_utils import QuotaExceededError
 
-        mock_client_instance = MagicMock()
-        mock_client_instance.get.return_value = mock_response
-        mock_httpx_client.return_value.__enter__.return_value = mock_client_instance
-
-        # Verify QuotaError is raised
-        with pytest.raises(QuotaError, match="Google API quota exceeded"):
-            client.search("test query")
-
-    @patch("httpx.Client")
-    @patch("duckduckgo_search.DDGS")
-    def test_fallback_triggered_on_quota_error(
-        self,
-        mock_ddgs: Mock,
-        mock_httpx_client: Mock,
-        mock_cache: SearchCache,
-    ):
-        """Test that fallback is triggered when quota exceeded and fallback enabled."""
-        # Create client with fallback enabled
-        client = GoogleSearchClient(
-            api_key="test_api_key",
-            cse_id="test_cse_id",
-            cache=mock_cache,
-            use_fallback=True,
+        mock_make_request.side_effect = QuotaExceededError(
+            "API quota exceeded: Rate limit exceeded (status: 429)"
         )
 
-        # Mock 429 response from Google
-        mock_response = Mock()
-        mock_response.status_code = 429
-        mock_response.json.return_value = {"error": {"message": "Quota exceeded"}}
-
-        mock_client_instance = MagicMock()
-        mock_client_instance.get.return_value = mock_response
-        mock_httpx_client.return_value.__enter__.return_value = mock_client_instance
-
-        # Mock DuckDuckGo response
-        mock_ddgs_instance = MagicMock()
-        mock_ddgs_instance.text.return_value = [
-            {
-                "title": "Test Result from DuckDuckGo",
-                "body": "This is a snippet from DuckDuckGo",
-                "href": "https://example.com/ddg",
-            }
-        ]
-        mock_ddgs.return_value.__enter__.return_value = mock_ddgs_instance
-
-        # Execute search - should use DuckDuckGo fallback
-        results = client.search("test query")
-
-        # Verify DuckDuckGo was called
-        assert len(results) == 1
-        assert results[0].title == "Test Result from DuckDuckGo"
-        assert results[0].snippet == "This is a snippet from DuckDuckGo"
-        assert str(results[0].url) == "https://example.com/ddg"
-        assert results[0].display_domain == "example.com"
+        # Verify exception is raised (QuotaError is an alias for QuotaExceededError)
+        with pytest.raises(QuotaExceededError, match="API quota exceeded"):
+            client.search("test query")
 
     @patch("httpx.Client")
     def test_cache_hit(
