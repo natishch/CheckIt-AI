@@ -1,6 +1,7 @@
 """Pydantic schemas for structured data with strict validation."""
 
 import re
+from enum import Enum
 from typing import Literal
 
 from pydantic import BaseModel, Field, HttpUrl, field_validator
@@ -41,13 +42,56 @@ class EvidenceItem(BaseModel):
         return v
 
 
+
+class EvidenceVerdict(str, Enum):
+    """
+    Normalized verdict for a historical claim based on the collected evidence.
+
+    Values:
+        SUPPORTED      – The evidence strongly supports the claim.
+        NOT_SUPPORTED  – The evidence contradicts or fails to support the claim.
+        CONTESTED      – The evidence is conflicting across sources.
+        INSUFFICIENT   – There is not enough evidence to decide either way.
+    """
+
+    SUPPORTED = "supported"
+    NOT_SUPPORTED = "not_supported"
+    CONTESTED = "contested"
+    INSUFFICIENT = "insufficient"
+
+    @classmethod
+    def from_str(cls, value: str) -> "EvidenceVerdict":
+        """
+        Lenient string-to-enum converter. Accepts common variants like:
+        'Supported', 'NOT_SUPPORTED', 'contested', etc.
+        Raises ValueError on unknown values.
+        """
+        normalized = value.strip().lower()
+
+        mapping = {
+            "supported": cls.SUPPORTED,
+            "support": cls.SUPPORTED,
+            "true": cls.SUPPORTED,
+            "not_supported": cls.NOT_SUPPORTED,
+            "not supported": cls.NOT_SUPPORTED,
+            "false": cls.NOT_SUPPORTED,
+            "contested": cls.CONTESTED,
+            "mixed": cls.CONTESTED,
+            "insufficient": cls.INSUFFICIENT,
+            "unknown": cls.INSUFFICIENT,
+        }
+
+        try:
+            return mapping[normalized]
+        except KeyError:
+            raise ValueError(f"Unknown EvidenceVerdict value: {value!r}") from None
+
 class Finding(BaseModel):
     """A finding with a claim, verdict, and supporting evidence IDs."""
 
     claim: str = Field(..., description="The claim being evaluated")
-    verdict: Literal["supported", "not_supported", "contested", "insufficient"] = Field(
-        ..., description="Verdict on the claim"
-    )
+    verdict: EvidenceVerdict
+
     evidence_ids: list[str] = Field(
         default_factory=list, description="List of evidence IDs supporting this finding"
     )
@@ -71,9 +115,8 @@ class EvidenceBundle(BaseModel):
     findings: list[Finding] = Field(
         default_factory=list, description="List of findings with verdicts"
     )
-    overall_verdict: Literal["supported", "not_supported", "contested", "insufficient"] = Field(
-        default="insufficient", description="Overall verdict based on all findings"
-    )
+    overall_verdict: EvidenceVerdict #Literal["supported", "not_supported", "contested", "insufficient"] = Field(
+        #default="insufficient", description="Overall verdict based on all findings")
 
 
 class Citation(BaseModel):

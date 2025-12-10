@@ -1,4 +1,13 @@
 """Configuration module using pydantic-settings for type-safe env variable loading."""
+from dotenv import load_dotenv
+import os
+from pathlib import Path
+from pydantic import Field,BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Any, Literal, Optional
+AgentRoute = Literal["fact_check", "clarify", "out_of_scope"]
+
+"""Configuration module using pydantic-settings for type-safe env variable loading."""
 
 from pathlib import Path
 
@@ -72,6 +81,9 @@ class Settings(BaseSettings):
         ge=1,
         description="Time-to-live for cached search results in hours",
     )
+    router_debug: bool = True          # controls extra logging & UI debug panel
+    offline_mode: bool = False          # optional, for researcher/offline demos
+    trusted_domains_only: bool = False  # optional, for researcher's site: filters
 
     def __init__(self, **kwargs):
         """Initialize settings and create necessary directories."""

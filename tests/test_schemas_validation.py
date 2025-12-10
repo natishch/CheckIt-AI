@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from check_it_ai.types.schemas import (
+from src.check_it_ai.types.schemas import (
     Citation,
     EvidenceBundle,
     EvidenceItem,
