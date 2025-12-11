@@ -11,6 +11,7 @@ Skip with: pytest tests/ --ignore=tests/integration/
 """
 
 import pytest
+from httpx import HTTPStatusError
 
 from check_it_ai.config import settings
 from check_it_ai.tools.duckduckgo_search import duckduckgo_search
@@ -31,7 +32,12 @@ class TestRealGoogleSearch:
 
         # Make real API call
         query = "Python programming language"
-        results = google_search(query, num_results=5)
+        try:
+            results = google_search(query, num_results=5)
+        except HTTPStatusError as e:
+            if e.response.status_code in [404, 403]:
+                pytest.skip(f"Google API credentials invalid or expired: {e}")
+            raise
 
         # Assertions
         assert isinstance(results, list)
@@ -61,7 +67,12 @@ class TestRealGoogleSearch:
 
         # Hebrew query
         query = "פייתון שפת תכנות"  # "Python programming language" in Hebrew
-        results = google_search(query, num_results=3)
+        try:
+            results = google_search(query, num_results=3)
+        except HTTPStatusError as e:
+            if e.response.status_code in [404, 403]:
+                pytest.skip(f"Google API credentials invalid or expired: {e}")
+            raise
 
         assert len(results) > 0, "Should return results for Hebrew query"
 
@@ -137,10 +148,10 @@ class TestRealDuckDuckGoSearch:
         results = duckduckgo_search(query, num_results=5)
 
         if not results:
-             # Fallback to another broad query if first one fails
-             print("   ⚠️  No results for 'Python programming', trying 'Google'...")
-             query = "Google"
-             results = duckduckgo_search(query, num_results=5)
+            # Fallback to another broad query if first one fails
+            print("   ⚠️  No results for 'Python programming', trying 'Google'...")
+            query = "Google"
+            results = duckduckgo_search(query, num_results=5)
 
         assert isinstance(results, list)
         assert len(results) > 0, "Should return at least one result"
@@ -164,9 +175,9 @@ class TestRealDuckDuckGoSearch:
         results = duckduckgo_search(query, num_results=3)
 
         if not results:
-             # Fallback to another common query if first one fails (flakiness mitigation)
-             query = "חדשות" # "News"
-             results = duckduckgo_search(query, num_results=3)
+            # Fallback to another common query if first one fails (flakiness mitigation)
+            query = "חדשות"  # "News"
+            results = duckduckgo_search(query, num_results=3)
 
         assert len(results) > 0, "Should return results for Hebrew query"
 

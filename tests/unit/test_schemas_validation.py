@@ -202,12 +202,8 @@ class TestEvidenceBundle:
                 display_domain="test.com",
             )
         ]
-        findings = [
-            Finding(claim="Test claim", verdict="supported", evidence_ids=["E1"])
-        ]
-        bundle = EvidenceBundle(
-            items=items, findings=findings, overall_verdict="supported"
-        )
+        findings = [Finding(claim="Test claim", verdict="supported", evidence_ids=["E1"])]
+        bundle = EvidenceBundle(items=items, findings=findings, overall_verdict="supported")
         assert bundle.overall_verdict == "supported"
         assert len(bundle.items) == 1
         assert len(bundle.findings) == 1

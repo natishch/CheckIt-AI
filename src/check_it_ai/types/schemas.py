@@ -13,6 +13,12 @@ class SearchQuery(BaseModel):
     max_results: int = Field(default=10, ge=1, le=100, description="Maximum number of results")
 
 
+class CheckRequest(BaseModel):
+    """Request schema for checking a claim."""
+
+    text: str = Field(..., min_length=1, description="The text/claim to be checked")
+
+
 class SearchResult(BaseModel):
     """Search result schema from Google Custom Search API."""
 
@@ -65,9 +71,7 @@ class Finding(BaseModel):
 class EvidenceBundle(BaseModel):
     """Complete evidence bundle with items, findings, and overall verdict."""
 
-    items: list[EvidenceItem] = Field(
-        default_factory=list, description="List of evidence items"
-    )
+    items: list[EvidenceItem] = Field(default_factory=list, description="List of evidence items")
     findings: list[Finding] = Field(
         default_factory=list, description="List of findings with verdicts"
     )
@@ -102,3 +106,27 @@ class FinalOutput(BaseModel):
         ..., ge=0.0, le=1.0, description="Confidence score between 0.0 and 1.0"
     )
     notes: str = Field(default="", description="Additional notes or limitations")
+
+
+class ChatRequest(BaseModel):
+    """Chat request schema for the /api/chat endpoint."""
+
+    query: str = Field(..., min_length=1, description="The user's query/claim to verify")
+    mode: Literal["standard"] = Field(
+        default="standard", description="Chat mode (standard for now, animated later)"
+    )
+
+
+class ChatResponse(BaseModel):
+    """Chat response schema with full evidence bundle."""
+
+    answer: str = Field(..., description="The AI's answer to the query")
+    citations: list[Citation] = Field(
+        default_factory=list, description="Citations used in the answer"
+    )
+    evidence: EvidenceBundle = Field(
+        default_factory=EvidenceBundle, description="Full evidence bundle with sources"
+    )
+    metadata: dict = Field(
+        default_factory=dict, description="Additional metadata (latency, model info, etc.)"
+    )

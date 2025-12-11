@@ -40,10 +40,7 @@ def duckduckgo_search(query: str, num_results: int = 10) -> list[SearchResult]:
     try:
         from ddgs import DDGS
     except ImportError:
-        logger.error(
-            "ddgs package not installed. "
-            "Install with: uv add ddgs"
-        )
+        logger.error("ddgs package not installed. Install with: uv add ddgs")
         return []
 
     try:

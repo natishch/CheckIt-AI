@@ -52,8 +52,7 @@ def google_fact_check(
 
     if not api_key:
         logger.warning(
-            "Google API key not configured for Fact Check API. "
-            "Set GOOGLE_API_KEY in .env file"
+            "Google API key not configured for Fact Check API. Set GOOGLE_API_KEY in .env file"
         )
         return []
 

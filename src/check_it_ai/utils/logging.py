@@ -87,8 +87,7 @@ def setup_logger(
     # Create formatter
     if format_string is None:
         format_string = (
-            "%(asctime)s | %(name)s | %(levelname)s | "
-            "%(filename)s:%(lineno)d | %(message)s"
+            "%(asctime)s | %(name)s | %(levelname)s | %(filename)s:%(lineno)d | %(message)s"
         )
 
     formatter = StructuredFormatter(
