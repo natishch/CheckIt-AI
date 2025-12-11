@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-from typing import Any, Tuple
-
 import logging
 import re
+from typing import Any
 
 from src.check_it_ai.config import settings
 from src.check_it_ai.graph.state import AgentState
+from src.check_it_ai.types.clarify import ClarifyRequest
 SETTINGS=settings
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Non-historical intent hints
+# Constants & heuristics
 # ---------------------------------------------------------------------------
 
+# Non-historical request hints grouped by a coarse intent type
 NON_HISTORICAL_HINTS: dict[str, tuple[str, ...]] = {
     "creative_request": (
         "write me a poem",
@@ -51,6 +52,7 @@ NON_HISTORICAL_HINTS: dict[str, tuple[str, ...]] = {
     ),
 }
 
+# Very generic truth questions that need clarification
 GENERIC_TRUTH_QUESTIONS = {
     "did it happen?",
     "is it true?",
@@ -59,8 +61,17 @@ GENERIC_TRUTH_QUESTIONS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Feature extraction & intent detection
+# ---------------------------------------------------------------------------
+
+
 def _analyze_query(q: str) -> dict[str, Any]:
-    """Compute lightweight features for routing."""
+    """
+    Compute lightweight features for routing.
+
+    Returns a dict that is also stored into run_metadata["router"]["features"].
+    """
     q_stripped = q.strip()
     q_lower = q_stripped.lower()
 
@@ -75,8 +86,11 @@ def _analyze_query(q: str) -> dict[str, Any]:
         )
     )
 
-    # Very lightweight ambiguous pronoun detection
-    contains_ambiguous_pronoun = any(p in q_lower for p in (" this ", " that ", " it "))
+    # Very lightweight ambiguous pronoun detection:
+    # note the spaces around to avoid matching inside words
+    contains_ambiguous_pronoun = any(
+        pat in q_lower for pat in (" this ", " that ", " it ")
+    )
 
     return {
         "num_tokens": num_tokens,
@@ -94,6 +108,7 @@ def _detect_non_historical_intent(q_lower: str) -> tuple[bool, str]:
         - "creative_request"
         - "coding_request"
         - "chat_request"
+    or "" if no non-historical intent is detected.
     """
     for intent_type, hints in NON_HISTORICAL_HINTS.items():
         if any(h in q_lower for h in hints):
@@ -101,14 +116,23 @@ def _detect_non_historical_intent(q_lower: str) -> tuple[bool, str]:
     return False, ""
 
 
+# ---------------------------------------------------------------------------
+# Router node
+# ---------------------------------------------------------------------------
+
+
 def router_node(state: AgentState) -> AgentState:
     """
     Decide route: fact_check vs clarify vs out_of_scope.
 
-    Writes explanation and features into state.run_metadata["router"].
+    - Always writes a "router" entry into state.run_metadata.
+    - For route == "clarify", also populates state.clarify_request with a ClarifyRequest.
+    - For route in {"fact_check", "out_of_scope"}, clarify_request is left as None.
     """
-    q = state.user_query or ""
-    q_stripped = q.strip()
+
+    # raw_query preserves original text including whitespace (important for clarify contract)
+    raw_query = state.user_query or ""
+    q_stripped = raw_query.strip()
     q_lower = q_stripped.lower()
 
     meta: dict[str, Any] = {
@@ -126,13 +150,20 @@ def router_node(state: AgentState) -> AgentState:
         meta["route"] = state.route
         meta["reason_code"] = "empty_query"
         meta["reason_text"] = "Query is empty or whitespace."
+
+        # ClarifyRequest with original (including spaces)
+        state.clarify_request = ClarifyRequest.from_empty_query(
+            original_query=raw_query,
+            features=None,
+        )
+
         state.run_metadata["router"] = meta
         return state
 
     # -----------------------------------------------------------------------
     # 2) Feature extraction
     # -----------------------------------------------------------------------
-    features = _analyze_query(q)
+    features = _analyze_query(raw_query)
     meta["features"] = features
 
     # -----------------------------------------------------------------------
@@ -143,17 +174,16 @@ def router_node(state: AgentState) -> AgentState:
         state.route = "out_of_scope"
         meta["route"] = state.route
         meta["reason_code"] = "non_historical_intent"
-        meta["intent_type"] = intent_type  # "creative_request", "coding_request", "chat_request"
+        meta["intent_type"] = intent_type
         meta["reason_text"] = (
             "Query appears to be non-historical (e.g., coding, creative writing, or general chat)."
         )
+        # clarify_request MUST stay None here
+        state.clarify_request = None
+
         state.run_metadata["router"] = meta
         if getattr(SETTINGS, "router_debug", False):
-            logger.info(
-                "Router: out_of_scope (%s)",
-                intent_type,
-                extra={"router_meta": meta},
-            )
+            logger.info("Router: out_of_scope (%s)", intent_type, extra={"router_meta": meta})
         return state
 
     # -----------------------------------------------------------------------
@@ -168,6 +198,13 @@ def router_node(state: AgentState) -> AgentState:
         meta["route"] = state.route
         meta["reason_code"] = "underspecified_query"
         meta["reason_text"] = "Query is too short or generic to form a specific historical claim."
+
+        state.clarify_request = ClarifyRequest.from_query(
+            original_query=raw_query,
+            reason_code="underspecified_query",
+            features=features,
+        )
+
         state.run_metadata["router"] = meta
         if getattr(SETTINGS, "router_debug", False):
             logger.info(
@@ -183,6 +220,13 @@ def router_node(state: AgentState) -> AgentState:
         meta["reason_text"] = (
             "Query uses ambiguous reference like 'this/that/it' without clear context."
         )
+
+        state.clarify_request = ClarifyRequest.from_query(
+            original_query=raw_query,
+            reason_code="ambiguous_reference",
+            features=features,
+        )
+
         state.run_metadata["router"] = meta
         if getattr(SETTINGS, "router_debug", False):
             logger.info(
@@ -198,7 +242,10 @@ def router_node(state: AgentState) -> AgentState:
     meta["route"] = state.route
     meta["reason_code"] = "default_fact_check"
     meta["reason_text"] = "Default: treat as a historical fact-check question."
+    state.clarify_request = None  # no clarify contract on fact_check path
+
     state.run_metadata["router"] = meta
     if getattr(SETTINGS, "router_debug", False):
         logger.info("Router: fact_check", extra={"router_meta": meta})
+
     return state

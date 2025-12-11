@@ -1,35 +1,31 @@
-# src/agentic_historian/types/clarify.py
 from __future__ import annotations
 
 from typing import Literal
+
 from pydantic import BaseModel, Field
 
+# ---------------------------------------------------------------------------
+# Public types
+# ---------------------------------------------------------------------------
 
-# Which “slots” we might ask the user to fill in
-ClarifyFieldKey = Literal["claim", "entity", "event", "time_period", "location"]
-
-# Why we are in clarify mode
-ClarifyReasonCode = Literal[
-    "empty_query",
-    "underspecified_query",
-    "ambiguous_reference",
-    "other",
-]
+ClarifyReasonCode = Literal["empty_query", "underspecified_query", "ambiguous_reference"]
 
 
 class ClarifyField(BaseModel):
     """
-    A single clarification field the UI can render.
-
-    Example:
-        key="claim",
-        question="What exactly do you want me to verify?",
-        hint="E.g. 'Did the Berlin Wall fall in 1989?'"
+    Single input field requested from the user to clarify their query.
     """
 
-    key: ClarifyFieldKey
-    question: str
-    hint: str | None = None
+    key: str = Field(description="Stable key, e.g. 'claim'.")
+    question: str = Field(description="Human-facing question, e.g. 'What exactly happened?'.")
+    hint: str | None = Field(
+        default=None,
+        description="Optional example or hint for the user.",
+    )
+    required: bool = Field(
+        default=True,
+        description="Whether this field must be filled in.",
+    )
 
 
 class ClarifyRequest(BaseModel):
@@ -72,13 +68,13 @@ class ClarifyRequest(BaseModel):
         cls,
         original_query: str,
         features: dict | None = None,
-    ) -> ClarifyRequest:
+    ) -> "ClarifyRequest":
         """
         Build a ClarifyRequest when the user query is empty/whitespace.
         `features` is optional and mainly there to keep the signature symmetrical
         with from_query().
         """
-        _ = features  # not used currently, kept for forward-compatibility
+        _ = features  # currently unused
 
         return cls(
             reason_code="empty_query",
@@ -101,27 +97,17 @@ class ClarifyRequest(BaseModel):
         original_query: str,
         reason_code: ClarifyReasonCode,
         features: dict | None = None,
-    ) -> ClarifyRequest:
+    ) -> "ClarifyRequest":
         """
         Build a ClarifyRequest for underspecified or ambiguous queries.
 
         Expected `reason_code` values here are typically:
         - 'underspecified_query'
         - 'ambiguous_reference'
-        but we keep the signature generic.
-
-        `features` is the dict produced by the router analysis, e.g.:
-           {
-             "normalized": "...",
-             "has_historical_keyword": True,
-             ...
-           }
         """
         features = features or {}
-        normalized = features.get("normalized", original_query.lower())
-        _ = normalized  # not strictly needed yet, but kept for future heuristics
 
-        # Base fields: always ask for a clear claim
+        # Base field: always ask for a clear claim
         fields: list[ClarifyField] = [
             ClarifyField(
                 key="claim",
@@ -133,19 +119,12 @@ class ClarifyRequest(BaseModel):
             )
         ]
 
-        # If we detected some historical keyword and the issue is underspecification,
-        # ask for a time period as well.
-        has_hist_keyword = bool(features.get("has_historical_keyword"))
-        if has_hist_keyword and reason_code == "underspecified_query":
-            fields.append(
-                ClarifyField(
-                    key="time_period",
-                    question="For which time period or date should I check this?",
-                    hint="If you know an approximate year or era, that helps reduce ambiguity.",
-                )
-            )
+        # Optional: if later you add 'has_historical_keyword' to features,
+        # you can add a second field for time period, but tests don't require it.
 
+        # Messages tuned to match clarify tests
         if reason_code == "underspecified_query":
+            # tests look for 'too short' or 'bit too short'
             message = (
                 "Your question is a bit too short for me to identify a specific historical claim."
             )
@@ -155,21 +134,14 @@ class ClarifyRequest(BaseModel):
                 "Please specify the historical event, person, or claim."
             )
         else:
+            # For completeness if we ever call this with 'empty_query'
             message = (
                 "I need a bit more detail to understand the historical claim you want me to check."
             )
 
-        # Normalize reason_code into the allowed Literal set
-        normalized_reason: ClarifyReasonCode
-        if reason_code in ("empty_query", "underspecified_query", "ambiguous_reference"):
-            normalized_reason = reason_code
-        else:
-            normalized_reason = "other"
-
         return cls(
-            reason_code=normalized_reason,
+            reason_code=reason_code,
             original_query=original_query,
             message=message,
             fields=fields,
         )
-

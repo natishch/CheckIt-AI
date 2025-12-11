@@ -109,7 +109,7 @@ class TestGoogleSearchClient:
         assert results[0].rank == 1
         assert results[1].rank == 2
 
-    @patch("check_it_ai.tools.google_search.make_api_request")
+    @patch("src.check_it_ai.tools.google_search.make_api_request")
     def test_quota_error_403(
         self,
         mock_make_request: Mock,
@@ -117,7 +117,7 @@ class TestGoogleSearchClient:
     ):
         """Test that 403 status code raises QuotaError."""
         # Mock quota exceeded error from shared utility
-        from check_it_ai.tools._http_utils import QuotaExceededError
+        from src.check_it_ai.tools._http_utils import QuotaExceededError
 
         mock_make_request.side_effect = QuotaExceededError(
             "API quota exceeded: Quota exceeded for quota metric (status: 403)"
@@ -127,7 +127,7 @@ class TestGoogleSearchClient:
         with pytest.raises(QuotaExceededError, match="API quota exceeded"):
             client.search("test query")
 
-    @patch("check_it_ai.tools.google_search.make_api_request")
+    @patch("src.check_it_ai.tools.google_search.make_api_request")
     def test_quota_error_429(
         self,
         mock_make_request: Mock,
@@ -135,7 +135,7 @@ class TestGoogleSearchClient:
     ):
         """Test that 429 status code raises QuotaError."""
         # Mock quota exceeded error from shared utility
-        from check_it_ai.tools._http_utils import QuotaExceededError
+        from src.check_it_ai.tools._http_utils import QuotaExceededError
 
         mock_make_request.side_effect = QuotaExceededError(
             "API quota exceeded: Rate limit exceeded (status: 429)"
