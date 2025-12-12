@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import json
 import re
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
-from src.check_it_ai.graph.state import AgentState
 from src.check_it_ai.types.schemas import EvidenceVerdict
+
+if TYPE_CHECKING:
+    from src.check_it_ai.graph.state import AgentState
 
 
 def build_writer_prompt(query, evidence):
