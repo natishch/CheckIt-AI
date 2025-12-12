@@ -4,7 +4,7 @@ import logging
 import sys
 from typing import Any
 
-from check_it_ai.config import settings
+from src.check_it_ai.config import settings
 
 
 class StructuredFormatter(logging.Formatter):
@@ -87,8 +87,7 @@ def setup_logger(
     # Create formatter
     if format_string is None:
         format_string = (
-            "%(asctime)s | %(name)s | %(levelname)s | "
-            "%(filename)s:%(lineno)d | %(message)s"
+            "%(asctime)s | %(name)s | %(levelname)s | %(filename)s:%(lineno)d | %(message)s"
         )
 
     formatter = StructuredFormatter(

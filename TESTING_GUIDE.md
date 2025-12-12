@@ -16,7 +16,7 @@ uv run pytest tests/ --ignore=tests/integration/
 
 These tests use mocks and don't make real API calls. They're fast and don't use API quota.
 
-**Result:** All 63 unit tests should pass ✅
+**Result:** All 104 unit tests should pass ✅
 
 ---
 
@@ -77,8 +77,8 @@ uv run pytest tests/integration/ -v -s -m integration
 ## Test Types
 
 ### Unit Tests (Default)
-- **Location:** `tests/unit/`
-- **Speed:** Fast (~0.08s for 63 tests)
+- **Location:** `tests/unit/` and `tests/graph/`
+- **Speed:** Fast (~0.5s for 104 tests)
 - **API Calls:** None (uses mocks)
 - **API Keys:** Not required
 - **Quota Usage:** Zero
