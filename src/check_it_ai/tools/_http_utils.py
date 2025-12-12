@@ -2,8 +2,8 @@
 
 import httpx
 
-from check_it_ai.config import settings
-from check_it_ai.utils.logging import setup_logger
+from src.check_it_ai.config import settings
+from src.check_it_ai.utils.logging import setup_logger
 
 logger = setup_logger(__name__)
 

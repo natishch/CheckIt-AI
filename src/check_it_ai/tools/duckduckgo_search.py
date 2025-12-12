@@ -4,8 +4,8 @@ from urllib.parse import urlparse
 
 from pydantic import ValidationError
 
-from check_it_ai.types.schemas import SearchResult
-from check_it_ai.utils.logging import setup_logger
+from src.check_it_ai.types.schemas import SearchResult
+from src.check_it_ai.utils.logging import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -40,10 +40,7 @@ def duckduckgo_search(query: str, num_results: int = 10) -> list[SearchResult]:
     try:
         from ddgs import DDGS
     except ImportError:
-        logger.error(
-            "ddgs package not installed. "
-            "Install with: uv add ddgs"
-        )
+        logger.error("ddgs package not installed. Install with: uv add ddgs")
         return []
 
     try:

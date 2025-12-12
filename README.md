@@ -117,6 +117,7 @@ Please read all the documentation files in the docs/ folder to understand the cu
 - docs/INITIALIZATION_SUMMARY.md - Initial project setup
 - docs/AH_02_CORE_SCHEMAS_SUMMARY.md - Core Pydantic schemas and state
 - docs/AH_03_04_CONFIG_CACHING_GOOGLE_SEARCH.md - Configuration and Google Search tool
+- docs/AH_05_ROUTER_NODE_SUMMARY.md - Router node with confidence scoring and multilingual support
 - docs/technical_design.pdf - Complete system architecture
 - docs/tasks_playbook.pdf - Task breakdown and guidance
 
