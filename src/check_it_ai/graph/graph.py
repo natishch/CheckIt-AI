@@ -8,6 +8,7 @@ from src.check_it_ai.graph.nodes.researcher import researcher_node
 from src.check_it_ai.graph.nodes.router import router_node
 from src.check_it_ai.graph.nodes.writer import writer_node
 from src.check_it_ai.graph.state import AgentState
+from src.check_it_ai.types.schemas import RouterDecision
 
 
 def build_graph():
@@ -21,9 +22,9 @@ def build_graph():
     graph.set_entry_point("router")
 
     def route_decision(state: AgentState) -> str:
-        if state.route == "clarify":
+        if state.route == RouterDecision.CLARIFY:
             return "clarify"
-        if state.route == "out_of_scope":
+        if state.route == RouterDecision.OUT_OF_SCOPE:
             return "out_of_scope"
         return "fact_check"
 

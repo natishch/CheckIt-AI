@@ -1,7 +1,7 @@
 """Pydantic schemas for structured data with strict validation."""
 
 import re
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field, HttpUrl, field_validator
@@ -148,7 +148,7 @@ class FinalOutput(BaseModel):
 
 
 # ============================================================================
-# Router Node Schemas (Phase 1: AH-05 Refactoring)
+# Router Node Schemas
 # ============================================================================
 
 

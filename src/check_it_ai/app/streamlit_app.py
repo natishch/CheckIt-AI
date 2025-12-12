@@ -5,6 +5,7 @@ import streamlit as st
 
 from src.check_it_ai.config import settings
 from src.check_it_ai.graph.graph import run_graph
+from src.check_it_ai.types.schemas import RouterDecision
 
 SETTINGS = settings
 
@@ -40,7 +41,7 @@ def main() -> None:
     state = run_graph(user_query)
 
     # Branch on route
-    if state.route == "clarify" and state.clarify_request:
+    if state.route == RouterDecision.CLARIFY and state.clarify_request:
         cr = state.clarify_request
         with st.chat_message("assistant"):
             st.markdown("### I need a bit more detail")
@@ -70,7 +71,7 @@ def main() -> None:
             }
         )
 
-    elif state.route == "out_of_scope":
+    elif state.route == RouterDecision.OUT_OF_SCOPE:
         with st.chat_message("assistant"):
             st.markdown("### Out of scope")
             st.write(

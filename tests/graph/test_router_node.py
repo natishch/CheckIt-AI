@@ -3,10 +3,6 @@ from src.check_it_ai.graph.state import AgentState
 
 
 class TestRouterNode:
-    # -------------------------------------------------------------------------
-    # Existing tests
-    # -------------------------------------------------------------------------
-
     def test_empty_query_routes_to_clarify(self):
         state = AgentState(user_query="   ")
         new_state = router_node(state)
@@ -43,10 +39,6 @@ class TestRouterNode:
         assert meta["trigger"] in ["default_fact_check", "explicit_verification"]
         assert meta["decision"] == "fact_check"
         assert meta["features"]["starts_like_question"] is True
-
-    # -------------------------------------------------------------------------
-    # Additional tests
-    # -------------------------------------------------------------------------
 
     def test_ambiguous_reference_routes_to_clarify(self):
         # Contains a vague "this" without verification keywords - should trigger ambiguous_reference
@@ -104,10 +96,6 @@ class TestRouterNode:
 
         # Original query should be preserved
         assert new_state.user_query == q
-
-    # -------------------------------------------------------------------------
-    # Phase 6: New tests for Router refactoring features
-    # -------------------------------------------------------------------------
 
     def test_hebrew_language_detection(self):
         """Test that Hebrew queries are detected correctly."""

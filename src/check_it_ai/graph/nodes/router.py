@@ -157,7 +157,7 @@ def router_node(state: AgentState) -> AgentState:
             features=features,
         )
 
-        state.route = "clarify"
+        state.route = RouterDecision.CLARIFY
         state.clarify_request = ClarifyRequest.from_empty_query(
             original_query=raw_query,
             features=features,
@@ -182,7 +182,7 @@ def router_node(state: AgentState) -> AgentState:
             intent_type=intent_type,
         )
 
-        state.route = "out_of_scope"
+        state.route = RouterDecision.OUT_OF_SCOPE
         state.clarify_request = None
         state.run_metadata["router"] = metadata.model_dump()
 
@@ -213,7 +213,7 @@ def router_node(state: AgentState) -> AgentState:
             features=features,
         )
 
-        state.route = "clarify"
+        state.route = RouterDecision.CLARIFY
         state.clarify_request = ClarifyRequest.from_query(
             original_query=raw_query,
             reason_code="underspecified_query",
@@ -241,7 +241,7 @@ def router_node(state: AgentState) -> AgentState:
             features=features,
         )
 
-        state.route = "clarify"
+        state.route = RouterDecision.CLARIFY
         state.clarify_request = ClarifyRequest.from_query(
             original_query=raw_query,
             reason_code="ambiguous_reference",
@@ -284,7 +284,7 @@ def router_node(state: AgentState) -> AgentState:
         features=features,
     )
 
-    state.route = "fact_check"
+    state.route = RouterDecision.FACT_CHECK
     state.clarify_request = None
     state.run_metadata["router"] = metadata.model_dump()
 
