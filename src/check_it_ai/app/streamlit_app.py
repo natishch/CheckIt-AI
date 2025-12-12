@@ -6,7 +6,9 @@ import streamlit as st
 from src.check_it_ai.config import settings
 from src.check_it_ai.graph.graph import run_graph
 
-SETTINGS=settings
+SETTINGS = settings
+
+
 def render_router_debug(state) -> None:
     if not SETTINGS.router_debug:
         return
@@ -126,7 +128,6 @@ def main() -> None:
 
             # router debug expander, as defined earlier
             render_router_debug(state)
-
 
         st.session_state.messages.append(
             {

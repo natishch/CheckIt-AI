@@ -68,7 +68,7 @@ class ClarifyRequest(BaseModel):
         cls,
         original_query: str,
         features: dict | None = None,
-    ) -> "ClarifyRequest":
+    ) -> ClarifyRequest:
         """
         Build a ClarifyRequest when the user query is empty/whitespace.
         `features` is optional and mainly there to keep the signature symmetrical
@@ -79,9 +79,7 @@ class ClarifyRequest(BaseModel):
         return cls(
             reason_code="empty_query",
             original_query=original_query,
-            message=(
-                "Please type a historical claim or question you would like me to fact-check."
-            ),
+            message=("Please type a historical claim or question you would like me to fact-check."),
             fields=[
                 ClarifyField(
                     key="claim",
@@ -97,7 +95,7 @@ class ClarifyRequest(BaseModel):
         original_query: str,
         reason_code: ClarifyReasonCode,
         features: dict | None = None,
-    ) -> "ClarifyRequest":
+    ) -> ClarifyRequest:
         """
         Build a ClarifyRequest for underspecified or ambiguous queries.
 
@@ -113,8 +111,7 @@ class ClarifyRequest(BaseModel):
                 key="claim",
                 question="What exactly do you want me to verify?",
                 hint=(
-                    "For example: 'Did X happen in year Y?' or "
-                    "'Was person P involved in event E?'"
+                    "For example: 'Did X happen in year Y?' or 'Was person P involved in event E?'"
                 ),
             )
         ]

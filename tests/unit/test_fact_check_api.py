@@ -46,17 +46,14 @@ class TestFactCheckClient:
                     "claimDate": "2024-01-15",
                     "claimReview": [
                         {
-                            "publisher": {
-                                "name": "PolitiFact",
-                                "site": "politifact.com"
-                            },
+                            "publisher": {"name": "PolitiFact", "site": "politifact.com"},
                             "url": "https://www.politifact.com/factchecks/2024/jan/15/wwii-end/",
                             "title": "Yes, World War II ended in 1945",
                             "textualRating": "True",
                             "languageCode": "en",
-                            "reviewDate": "2024-01-20"
+                            "reviewDate": "2024-01-20",
                         }
-                    ]
+                    ],
                 },
                 {
                     "text": "The moon landing was faked",
@@ -64,18 +61,15 @@ class TestFactCheckClient:
                     "claimDate": "2023-12-01",
                     "claimReview": [
                         {
-                            "publisher": {
-                                "name": "Snopes",
-                                "site": "snopes.com"
-                            },
+                            "publisher": {"name": "Snopes", "site": "snopes.com"},
                             "url": "https://www.snopes.com/fact-check/moon-landing-fake/",
                             "title": "Moon landing was real, not faked",
                             "textualRating": "False",
                             "languageCode": "en",
-                            "reviewDate": "2023-12-05"
+                            "reviewDate": "2023-12-05",
                         }
-                    ]
-                }
+                    ],
+                },
             ]
         }
 
@@ -137,7 +131,10 @@ class TestFactCheckClient:
         assert "World War II ended in 1945" in results[0].title
         assert "Rating: True" in results[0].snippet
         assert str(results[0].url) == "https://www.politifact.com/factchecks/2024/jan/15/wwii-end/"
-        assert "politifact" in results[0].display_domain.lower() or results[0].display_domain == "PolitiFact"
+        assert (
+            "politifact" in results[0].display_domain.lower()
+            or results[0].display_domain == "PolitiFact"
+        )
         assert results[0].rank == 1
 
         # Check second result (False rating)
@@ -185,9 +182,7 @@ class TestFactCheckClient:
         # Mock httpx response with 403 status
         mock_response = Mock()
         mock_response.status_code = 403
-        mock_response.json.return_value = {
-            "error": {"message": "API key quota exceeded"}
-        }
+        mock_response.json.return_value = {"error": {"message": "API key quota exceeded"}}
 
         # Mock httpx client context manager
         mock_client_instance = MagicMock()
@@ -204,9 +199,7 @@ class TestFactCheckClient:
         # Mock httpx response with 429 status
         mock_response = Mock()
         mock_response.status_code = 429
-        mock_response.json.return_value = {
-            "error": {"message": "Rate limit exceeded"}
-        }
+        mock_response.json.return_value = {"error": {"message": "Rate limit exceeded"}}
 
         # Mock httpx client context manager
         mock_client_instance = MagicMock()
@@ -308,9 +301,9 @@ class TestFactCheckClient:
                             "publisher": {"name": "FactChecker"},
                             "url": "https://factchecker.com/valid",
                             "title": "Valid fact-check",
-                            "textualRating": "True"
+                            "textualRating": "True",
                         }
-                    ]
+                    ],
                 },
                 {
                     "text": "Malformed claim - no review"
@@ -323,10 +316,10 @@ class TestFactCheckClient:
                             "publisher": {"name": "BadChecker"},
                             # Missing url
                             "title": "Bad fact-check",
-                            "textualRating": "False"
+                            "textualRating": "False",
                         }
-                    ]
-                }
+                    ],
+                },
             ]
         }
 

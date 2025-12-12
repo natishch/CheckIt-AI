@@ -155,9 +155,7 @@ def _parse_results(raw_results: list[dict[str, Any]]) -> list[SearchResult]:
             # Skip invalid results
             continue
 
-    logger.debug(
-        f"Parsed {len(parsed_results)} valid results out of {len(raw_results)} total"
-    )
+    logger.debug(f"Parsed {len(parsed_results)} valid results out of {len(raw_results)} total")
 
     return parsed_results
 

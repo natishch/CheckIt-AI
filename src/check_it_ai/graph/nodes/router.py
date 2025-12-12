@@ -5,65 +5,25 @@ import re
 from typing import Any
 
 from src.check_it_ai.config import settings
+from src.check_it_ai.graph.nodes.router_patterns import (
+    GENERIC_TRUTH_QUESTIONS,
+    NON_HISTORICAL_HINTS,
+    YEAR_PATTERN,
+    detect_language,
+    has_historical_markers,
+    is_verification_question,
+)
 from src.check_it_ai.graph.state import AgentState
 from src.check_it_ai.types.clarify import ClarifyRequest
-SETTINGS=settings
+from src.check_it_ai.types.schemas import RouterDecision, RouterMetadata, RouterTrigger
+
+SETTINGS = settings
 logger = logging.getLogger(__name__)
-
-# ---------------------------------------------------------------------------
-# Constants & heuristics
-# ---------------------------------------------------------------------------
-
-# Non-historical request hints grouped by a coarse intent type
-NON_HISTORICAL_HINTS: dict[str, tuple[str, ...]] = {
-    "creative_request": (
-        "write me a poem",
-        "poem about",
-        "song about",
-        "lyrics about",
-        "short story",
-        "story about",
-        "screenplay",
-        "script for",
-    ),
-    "coding_request": (
-        "python code",
-        "python script",
-        "write a python script",
-        "write code",
-        "code this",
-        "bash script",
-        "shell script",
-        "powershell script",
-        "dockerfile",
-        "docker compose",
-        "sql query",
-        "regex for",
-    ),
-    "chat_request": (
-        "tell me a joke",
-        "make me laugh",
-        "roast me",
-        "pick up line",
-        "pickup line",
-        "dating advice",
-        "relationship advice",
-        "life advice",
-    ),
-}
-
-# Very generic truth questions that need clarification
-GENERIC_TRUTH_QUESTIONS = {
-    "did it happen?",
-    "is it true?",
-    "is that true?",
-    "is this true?",
-}
-
 
 # ---------------------------------------------------------------------------
 # Feature extraction & intent detection
 # ---------------------------------------------------------------------------
+# NOTE: Pattern constants moved to router_patterns.py
 
 
 def _analyze_query(q: str) -> dict[str, Any]:
@@ -88,9 +48,7 @@ def _analyze_query(q: str) -> dict[str, Any]:
 
     # Very lightweight ambiguous pronoun detection:
     # note the spaces around to avoid matching inside words
-    contains_ambiguous_pronoun = any(
-        pat in q_lower for pat in (" this ", " that ", " it ")
-    )
+    contains_ambiguous_pronoun = any(pat in q_lower for pat in (" this ", " that ", " it "))
 
     return {
         "num_tokens": num_tokens,
@@ -116,6 +74,51 @@ def _detect_non_historical_intent(q_lower: str) -> tuple[bool, str]:
     return False, ""
 
 
+def _calculate_confidence(query: str) -> float:
+    """Calculate routing confidence score (0.0-1.0) for fact-check decisions.
+
+    Confidence is based on multiple signals:
+    - Explicit verification patterns (highest weight)
+    - Historical entities/dates
+    - Question structure
+
+    Confidence Tiers:
+    - 0.85-1.0: Explicit verification + historical entity
+    - 0.7-0.85: Strong historical signals (year + keywords + question)
+    - 0.5-0.7:  Some historical signals
+    - 0.3-0.5:  Weak signals (borderline)
+
+    Args:
+        query: User query string
+
+    Returns:
+        Float between 0.0 and 1.0
+    """
+    score = 0.3  # Conservative base
+
+    # TIER 1: Explicit verification (strongest signal)
+    if is_verification_question(query):
+        score += 0.35
+        if has_historical_markers(query):
+            score += 0.2  # Verification + entity = very strong
+
+    # TIER 2: Historical markers
+    if YEAR_PATTERN.search(query):
+        score += 0.15  # Contains year
+
+    if has_historical_markers(query):
+        score += 0.15  # Historical keywords
+
+    # TIER 3: Question structure
+    if re.search(r"\b(who|what|when|where|how|why)\b", query, re.IGNORECASE):
+        score += 0.1  # WH-question
+
+    if re.search(r"^(did|was|were|is|are)\b", query, re.IGNORECASE):
+        score += 0.1  # Yes/no question
+
+    return min(score, 1.0)
+
+
 # ---------------------------------------------------------------------------
 # Router node
 # ---------------------------------------------------------------------------
@@ -125,9 +128,9 @@ def router_node(state: AgentState) -> AgentState:
     """
     Decide route: fact_check vs clarify vs out_of_scope.
 
-    - Always writes a "router" entry into state.run_metadata.
-    - For route == "clarify", also populates state.clarify_request with a ClarifyRequest.
-    - For route in {"fact_check", "out_of_scope"}, clarify_request is left as None.
+    - Always writes a "router" entry into state.run_metadata using RouterMetadata
+    - For route == "clarify", also populates state.clarify_request with a ClarifyRequest
+    - For route in {"fact_check", "out_of_scope"}, clarify_request is left as None
     """
 
     # raw_query preserves original text including whitespace (important for clarify contract)
@@ -135,117 +138,157 @@ def router_node(state: AgentState) -> AgentState:
     q_stripped = raw_query.strip()
     q_lower = q_stripped.lower()
 
-    meta: dict[str, Any] = {
-        "route": None,
-        "reason_code": None,
-        "reason_text": None,
-        "features": {},
-    }
+    # Extract features for metadata
+    features = _analyze_query(raw_query)
+    query_length_words = features["num_tokens"]
+    detected_language = detect_language(raw_query)
 
     # -----------------------------------------------------------------------
     # 1) Empty query -> clarify
     # -----------------------------------------------------------------------
     if not q_stripped:
-        state.route = "clarify"
-        meta["route"] = state.route
-        meta["reason_code"] = "empty_query"
-        meta["reason_text"] = "Query is empty or whitespace."
-
-        # ClarifyRequest with original (including spaces)
-        state.clarify_request = ClarifyRequest.from_empty_query(
-            original_query=raw_query,
-            features=None,
+        metadata = RouterMetadata(
+            trigger=RouterTrigger.EMPTY_QUERY,
+            decision=RouterDecision.CLARIFY,
+            reasoning="Query is empty or whitespace",
+            confidence=0.0,
+            query_length_words=0,
+            detected_language=detected_language,
+            features=features,
         )
 
-        state.run_metadata["router"] = meta
+        state.route = "clarify"
+        state.clarify_request = ClarifyRequest.from_empty_query(
+            original_query=raw_query,
+            features=features,
+        )
+        state.run_metadata["router"] = metadata.model_dump()
         return state
 
     # -----------------------------------------------------------------------
-    # 2) Feature extraction
-    # -----------------------------------------------------------------------
-    features = _analyze_query(raw_query)
-    meta["features"] = features
-
-    # -----------------------------------------------------------------------
-    # 3) Non-historical detection (run BEFORE underspecified/clarify)
+    # 2) Non-historical detection (run BEFORE underspecified/clarify)
     # -----------------------------------------------------------------------
     is_non_hist, intent_type = _detect_non_historical_intent(q_lower)
     if is_non_hist:
-        state.route = "out_of_scope"
-        meta["route"] = state.route
-        meta["reason_code"] = "non_historical_intent"
-        meta["intent_type"] = intent_type
-        meta["reason_text"] = (
-            "Query appears to be non-historical (e.g., coding, creative writing, or general chat)."
+        # Out-of-scope has high confidence (pattern matched clearly)
+        metadata = RouterMetadata(
+            trigger=RouterTrigger.NON_HISTORICAL_INTENT,
+            decision=RouterDecision.OUT_OF_SCOPE,
+            reasoning=f"Non-historical request detected: {intent_type}",
+            confidence=0.95,  # High confidence - clear pattern match
+            query_length_words=query_length_words,
+            detected_language=detected_language,
+            features=features,
+            intent_type=intent_type,
         )
-        # clarify_request MUST stay None here
-        state.clarify_request = None
 
-        state.run_metadata["router"] = meta
+        state.route = "out_of_scope"
+        state.clarify_request = None
+        state.run_metadata["router"] = metadata.model_dump()
+
         if getattr(SETTINGS, "router_debug", False):
-            logger.info("Router: out_of_scope (%s)", intent_type, extra={"router_meta": meta})
+            logger.info(
+                "Router: out_of_scope (%s)",
+                intent_type,
+                extra={"router_meta": metadata.model_dump()},
+            )
         return state
 
     # -----------------------------------------------------------------------
-    # 4) Underspecified / ambiguous -> clarify
+    # 3) Underspecified / ambiguous -> clarify
     # -----------------------------------------------------------------------
     if (
-        features["num_chars"] < 8
+        features["num_chars"] < SETTINGS.router_min_query_chars
         or features["num_tokens"] < 2
         or q_lower in GENERIC_TRUTH_QUESTIONS
     ):
-        state.route = "clarify"
-        meta["route"] = state.route
-        meta["reason_code"] = "underspecified_query"
-        meta["reason_text"] = "Query is too short or generic to form a specific historical claim."
+        # Clarify routes have low confidence by definition (need more info)
+        metadata = RouterMetadata(
+            trigger=RouterTrigger.UNDERSPECIFIED_QUERY,
+            decision=RouterDecision.CLARIFY,
+            reasoning="Query is too short or generic to form a specific historical claim",
+            confidence=0.2,  # Low confidence - needs clarification
+            query_length_words=query_length_words,
+            detected_language=detected_language,
+            features=features,
+        )
 
+        state.route = "clarify"
         state.clarify_request = ClarifyRequest.from_query(
             original_query=raw_query,
             reason_code="underspecified_query",
             features=features,
         )
+        state.run_metadata["router"] = metadata.model_dump()
 
-        state.run_metadata["router"] = meta
         if getattr(SETTINGS, "router_debug", False):
             logger.info(
                 "Router: clarify (underspecified_query)",
-                extra={"router_meta": meta},
+                extra={"router_meta": metadata.model_dump()},
             )
         return state
 
-    if features.get("contains_ambiguous_pronoun"):
-        state.route = "clarify"
-        meta["route"] = state.route
-        meta["reason_code"] = "ambiguous_reference"
-        meta["reason_text"] = (
-            "Query uses ambiguous reference like 'this/that/it' without clear context."
+    # Check for ambiguous pronouns, BUT skip if it's an explicit verification question
+    # (e.g., "Is it true that..." has "it" but is a clear verification pattern)
+    if features.get("contains_ambiguous_pronoun") and not is_verification_question(raw_query):
+        metadata = RouterMetadata(
+            trigger=RouterTrigger.AMBIGUOUS_REFERENCE,
+            decision=RouterDecision.CLARIFY,
+            reasoning="Query contains ambiguous pronouns (this/that/it) without clear context",
+            confidence=0.3,  # Low confidence - needs clarification
+            query_length_words=query_length_words,
+            detected_language=detected_language,
+            features=features,
         )
 
+        state.route = "clarify"
         state.clarify_request = ClarifyRequest.from_query(
             original_query=raw_query,
             reason_code="ambiguous_reference",
             features=features,
         )
+        state.run_metadata["router"] = metadata.model_dump()
 
-        state.run_metadata["router"] = meta
         if getattr(SETTINGS, "router_debug", False):
             logger.info(
                 "Router: clarify (ambiguous_reference)",
-                extra={"router_meta": meta},
+                extra={"router_meta": metadata.model_dump()},
             )
         return state
 
     # -----------------------------------------------------------------------
-    # 5) Default -> fact_check
+    # 4) Fact-check (with confidence scoring)
     # -----------------------------------------------------------------------
-    state.route = "fact_check"
-    meta["route"] = state.route
-    meta["reason_code"] = "default_fact_check"
-    meta["reason_text"] = "Default: treat as a historical fact-check question."
-    state.clarify_request = None  # no clarify contract on fact_check path
+    # Check for explicit verification questions (highest priority)
+    has_markers = has_historical_markers(raw_query)
+    is_verification = is_verification_question(raw_query)
 
-    state.run_metadata["router"] = meta
+    if is_verification:
+        trigger = RouterTrigger.EXPLICIT_VERIFICATION
+        reasoning = "Explicit verification question detected"
+    else:
+        trigger = RouterTrigger.DEFAULT_FACT_CHECK
+        reasoning = "Query passed all filters; routing to fact-check pipeline"
+
+    # Calculate confidence score using the confidence function
+    confidence = _calculate_confidence(raw_query)
+
+    metadata = RouterMetadata(
+        trigger=trigger,
+        decision=RouterDecision.FACT_CHECK,
+        reasoning=reasoning,
+        confidence=confidence,  # Calculated based on signals
+        query_length_words=query_length_words,
+        has_historical_markers=has_markers,
+        detected_language=detected_language,
+        features=features,
+    )
+
+    state.route = "fact_check"
+    state.clarify_request = None
+    state.run_metadata["router"] = metadata.model_dump()
+
     if getattr(SETTINGS, "router_debug", False):
-        logger.info("Router: fact_check", extra={"router_meta": meta})
+        logger.info("Router: fact_check", extra={"router_meta": metadata.model_dump()})
 
     return state

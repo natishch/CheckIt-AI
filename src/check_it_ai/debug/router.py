@@ -4,8 +4,8 @@ import argparse
 import json
 from typing import Any
 
-from src.check_it_ai.graph.state import AgentState
 from src.check_it_ai.graph.nodes.router import router_node
+from src.check_it_ai.graph.state import AgentState
 
 
 def _print_human_readable(route: str | None, meta: dict[str, Any]) -> None:
@@ -62,9 +62,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-'''
+"""
 uv run python -m agentic_historian.debug.router "When did the Berlin Wall fall?"
 uv run python -m agentic_historian.debug.router "write a poem about WW2" --json
 uv run python -m agentic_historian.debug.router
 # then type the query interactively
-'''
+"""

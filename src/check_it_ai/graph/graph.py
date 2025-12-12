@@ -1,12 +1,14 @@
 """LangGraph workflow orchestration."""
-# src/agentic_historian/graph/graph.py (sketch)
-from langgraph.graph import StateGraph, END
 
-from src.check_it_ai.graph.state import AgentState
-from src.check_it_ai.graph.nodes.router import router_node
-from src.check_it_ai.graph.nodes.researcher import researcher_node
+# src/agentic_historian/graph/graph.py (sketch)
+from langgraph.graph import END, StateGraph
+
 from src.check_it_ai.graph.nodes.fact_analyst import fact_analyst_node
-from src.check_it_ai.graph.nodesriter import writer_node
+from src.check_it_ai.graph.nodes.researcher import researcher_node
+from src.check_it_ai.graph.nodes.router import router_node
+from src.check_it_ai.graph.nodes.writer import writer_node
+from src.check_it_ai.graph.state import AgentState
+
 
 def build_graph():
     graph = StateGraph(AgentState)
@@ -42,7 +44,7 @@ def build_graph():
     return graph
 
 
-#TODO
+# TODO
 def run_graph(query: str) -> dict:
     """
     Dummy graph execution function.

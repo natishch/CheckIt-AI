@@ -1,15 +1,21 @@
 from __future__ import annotations
 
-from typing import List
-from pydantic import BaseModel, Field
-from src.check_it_ai.types.schemas import EvidenceVerdict
 import json
 import re
-from typing import Any
 
-#from src.check_it_ai.llm.prompts import build_writer_prompt
+from pydantic import BaseModel, Field
+
+from src.check_it_ai.graph.state import AgentState
+from src.check_it_ai.types.schemas import EvidenceVerdict
+
+
+def build_writer_prompt(query, evidence):
+    """Stub for missing prompt builder."""
+    return f"Question: {query}\\nEvidence: {evidence}"
+
 
 CITE_RE = re.compile(r"\[E\d+\]")
+
 
 class WriterOutput(BaseModel):
     """
@@ -32,7 +38,7 @@ class WriterOutput(BaseModel):
         description="Model's self-assessed confidence in the factual accuracy, between 0 and 1.",
     )
 
-    evidence_ids: List[str] = Field(
+    evidence_ids: list[str] = Field(
         default_factory=list,
         description="EvidenceItem IDs actually used in the answer (e.g. ['E1', 'E3']).",
     )

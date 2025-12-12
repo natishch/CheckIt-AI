@@ -1,5 +1,7 @@
-import pytest
 from pathlib import Path
+
+import pytest
+
 
 def pytest_collection_modifyitems(items):
     """Automatically mark all tests in this directory as unit tests."""

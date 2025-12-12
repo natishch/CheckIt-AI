@@ -1,18 +1,14 @@
 """Configuration module using pydantic-settings for type-safe env variable loading."""
-from dotenv import load_dotenv
-import os
-from pathlib import Path
-from pydantic import Field,BaseModel
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Any, Literal, Optional
-AgentRoute = Literal["fact_check", "clarify", "out_of_scope"]
-
-"""Configuration module using pydantic-settings for type-safe env variable loading."""
 
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+AgentRoute = Literal["fact_check", "clarify", "out_of_scope"]
+
+"""Configuration module using pydantic-settings for type-safe env variable loading."""
 
 
 class Settings(BaseSettings):
@@ -85,9 +81,33 @@ class Settings(BaseSettings):
         ge=1,
         description="Time-to-live for cached search results in hours",
     )
-    router_debug: bool = True          # controls extra logging & UI debug panel
-    offline_mode: bool = False          # optional, for researcher/offline demos
+    router_debug: bool = True  # controls extra logging & UI debug panel
+    offline_mode: bool = False  # optional, for researcher/offline demos
     trusted_domains_only: bool = False  # optional, for researcher's site: filters
+
+    # Router Configuration (Phase 3: AH-05)
+    router_current_events_years_ago: int = Field(
+        default=2,
+        ge=0,
+        le=10,
+        description=(
+            "How many years back to consider 'current events' (out of scope). "
+            "Set to 0 to allow all recent events. "
+            "Default: 2 (events from last 2 years rejected)"
+        ),
+    )
+    router_min_query_words: int = Field(
+        default=3,
+        ge=1,
+        le=20,
+        description="Minimum words required for valid query (used for underspecified detection)",
+    )
+    router_min_query_chars: int = Field(
+        default=8,
+        ge=1,
+        le=100,
+        description="Minimum characters required for valid query (used for underspecified detection)",
+    )
 
     # Language Configuration
     default_language: str = Field(

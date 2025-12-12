@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, Mock, patch
 import httpx
 import pytest
 
-from src.check_it_ai.tools.google_search import GoogleSearchClient, QuotaError
+from src.check_it_ai.tools.google_search import GoogleSearchClient
 from src.check_it_ai.types.schemas import SearchResult
 from src.check_it_ai.utils.cache import SearchCache
 
