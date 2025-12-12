@@ -1,10 +1,10 @@
 """Pydantic schemas for structured data with strict validation."""
-
+#src.check_it_ai.types.schemas
 import re
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
 
 class SearchQuery(BaseModel):
@@ -31,7 +31,11 @@ class EvidenceItem(BaseModel):
     title: str = Field(..., description="Source title")
     snippet: str = Field(..., description="Relevant snippet from the source")
     url: HttpUrl = Field(..., description="Source URL")
-    display_domain: str = Field(..., description="Display domain of the source")
+    # Optional in constructors; we can derive it from the URL later if needed.
+    display_domain: str = Field(
+        default="",
+        description="Display domain of the source (e.g., 'wikipedia.org').",
+    )
 
     @field_validator("id")
     @classmethod
@@ -40,6 +44,7 @@ class EvidenceItem(BaseModel):
         if not re.match(r"^E\d+$", v):
             raise ValueError(f"Evidence ID must match pattern 'E<number>', got: {v}")
         return v
+
 
 
 class EvidenceVerdict(StrEnum):
@@ -107,16 +112,35 @@ class Finding(BaseModel):
 
 
 class EvidenceBundle(BaseModel):
-    """Complete evidence bundle with items, findings, and overall verdict."""
+    """Complete evidence bundle with items, findings, and overall verdict.
 
-    items: list[EvidenceItem] = Field(default_factory=list, description="List of evidence items")
+    Notes
+    -----
+    - `evidence_items` is the canonical field used in new code.
+    - `items` is kept as an alias for backward compatibility.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    evidence_items: list[EvidenceItem] = Field(
+        default_factory=list,
+        description="List of evidence items",
+        alias="items",
+    )
     findings: list[Finding] = Field(
-        default_factory=list, description="List of findings with verdicts"
+        default_factory=list,
+        description="List of findings with verdicts",
     )
     overall_verdict: EvidenceVerdict = Field(
         default=EvidenceVerdict.INSUFFICIENT,
         description="Overall verdict based on all findings",
     )
+
+    @property
+    def items(self) -> list[EvidenceItem]:
+        """Backward compatible attribute; returns `evidence_items`."""
+        return self.evidence_items
+
 
 
 class Citation(BaseModel):
@@ -124,6 +148,10 @@ class Citation(BaseModel):
 
     evidence_id: str = Field(..., description="Evidence ID being cited")
     url: HttpUrl = Field(..., description="URL of the cited source")
+    title: str = Field(
+        default="",
+        description="Title of the cited source (for UI display).",
+    )
 
     @field_validator("evidence_id")
     @classmethod
@@ -132,6 +160,7 @@ class Citation(BaseModel):
         if not re.match(r"^E\d+$", v):
             raise ValueError(f"Evidence ID must match pattern 'E<number>', got: {v}")
         return v
+
 
 
 class FinalOutput(BaseModel):
