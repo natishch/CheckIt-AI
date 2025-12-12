@@ -42,7 +42,7 @@ class EvidenceItem(BaseModel):
         return v
 
 
-class EvidenceVerdict(str, Enum):
+class EvidenceVerdict(StrEnum):
     """
     Normalized verdict for a historical claim based on the collected evidence.
 
