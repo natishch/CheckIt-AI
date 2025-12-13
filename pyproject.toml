@@ -43,6 +43,9 @@ llm-openai = ["langchain-openai>=0.2.0"]
 llm-anthropic = ["langchain-anthropic>=0.2.0"]
 llm-google = ["langchain-google-genai>=2.0.0"]
 
+[project.scripts]
+check-it-ai = "check_it_ai.cli:main"
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"

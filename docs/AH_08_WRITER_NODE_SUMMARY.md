@@ -1,4 +1,4 @@
-# AH-07: Writer Node Implementation - Summary
+# AH-08: Writer Node Implementation - Summary
 
 **Task**: Implement Writer Node with Few-Shot Prompt Engineering and Multi-Provider LLM Support
 **Date**: 2025-12-13
@@ -298,7 +298,7 @@ print(result["writer_output"])     # Full WriterOutput object
 
 ## Next Steps
 
-### Pending: Fact Analyst Node (AH-08)
+### Pending: Fact Analyst Node (AH-07)
 The pipeline is missing the Fact Analyst node between Researcher and Writer:
 
 ```
@@ -329,6 +329,6 @@ The design document specifies re-prompt logic for hallucinated citations. This r
 
 ---
 
-**End of AH-07 Summary**
+**End of AH-08 Summary**
 
 The Writer Node is production-ready with comprehensive test coverage. All prompt engineering, validation, and confidence calculation components are implemented per the design document.

@@ -10,6 +10,13 @@ from src.check_it_ai.types.evidence import (
     EvidenceVerdict,
     Finding,
 )
+from src.check_it_ai.types.graph import (
+    GraphCompleteEvent,
+    GraphResult,
+    NodeEndEvent,
+    NodeStartEvent,
+    StreamEvent,
+)
 from src.check_it_ai.types.output import FinalOutput
 from src.check_it_ai.types.router import RouterDecision, RouterMetadata, RouterTrigger
 from src.check_it_ai.types.search import SearchQuery, SearchResult
@@ -32,4 +39,10 @@ __all__ = [
     # Output
     "FinalOutput",
     "WriterOutput",
+    # Graph
+    "GraphResult",
+    "NodeStartEvent",
+    "NodeEndEvent",
+    "GraphCompleteEvent",
+    "StreamEvent",
 ]
