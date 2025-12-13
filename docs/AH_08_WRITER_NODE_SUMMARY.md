@@ -296,20 +296,13 @@ print(result["writer_output"])     # Full WriterOutput object
 
 ---
 
-## Next Steps
 
-### Pending: Fact Analyst Node (AH-07)
-The pipeline is missing the Fact Analyst node between Researcher and Writer:
+### Completed: Fact Analyst Node (AH-07)
+
 
 ```
-Router → Researcher → [Fact Analyst] → Writer
+Router → Researcher → Fact Analyst → Writer
 ```
-
-The Fact Analyst should:
-1. Convert `SearchResult` list to `EvidenceBundle`
-2. Score source credibility
-3. Extract claims and detect contradictions
-4. Set `overall_verdict`
 
 ### Pending: Re-prompt on Hallucination
 The design document specifies re-prompt logic for hallucinated citations. This requires LangGraph message history and is deferred to graph integration task.

@@ -3,6 +3,11 @@
 This module re-exports all types from submodules for convenient imports.
 """
 
+from src.check_it_ai.types.analyst import (
+    ExtractedClaims,
+    SingleEvaluation,
+    VerdictResult,
+)
 from src.check_it_ai.types.evidence import (
     Citation,
     EvidenceBundle,
@@ -32,6 +37,10 @@ __all__ = [
     "Finding",
     "EvidenceBundle",
     "Citation",
+    # Analyst
+    "ExtractedClaims",
+    "SingleEvaluation",
+    "VerdictResult",
     # Router
     "RouterTrigger",
     "RouterDecision",
