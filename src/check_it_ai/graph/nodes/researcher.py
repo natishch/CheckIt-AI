@@ -121,9 +121,9 @@ def researcher_node(state: AgentState) -> dict:
 
     logger.info(f"Starting research for query: {user_query}")
 
-    # Check for trusted sources configuration (using environment variable pattern)
-    # This feature can be enabled via a config flag in the future
-    trusted_sources_only = getattr(settings, "trusted_sources_only", False)
+    # Check for trusted domains configuration
+    # This feature can be enabled via TRUSTED_DOMAINS_ONLY in .env
+    trusted_sources_only = settings.trusted_domains_only
 
     # Step 1: Query Expansion
     expanded_queries = expand_query(user_query, trusted_sources_only=trusted_sources_only)

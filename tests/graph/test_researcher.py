@@ -313,8 +313,8 @@ class TestResearcherNode:
     @patch("check_it_ai.graph.nodes.researcher.settings")
     def test_researcher_node_trusted_mode(self, mock_settings, mock_google_search, mock_search_results):
         """Test that trusted mode appends site filters to queries."""
-        # Enable trusted_sources_only mode
-        mock_settings.trusted_sources_only = True
+        # Enable trusted_domains_only mode
+        mock_settings.trusted_domains_only = True
         mock_settings.max_search_results = 10
         mock_google_search.return_value = mock_search_results
 
