@@ -11,9 +11,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pydantic import HttpUrl
 
-from check_it_ai.graph.nodes.fact_analyst import fact_analyst_node
-from check_it_ai.graph.nodes.writer import writer_node
-from check_it_ai.graph.state import AgentState
+from src.check_it_ai.graph.nodes.fact_analyst import fact_analyst_node
+from src.check_it_ai.graph.nodes.writer import writer_node
+from src.check_it_ai.graph.state import AgentState
 from src.check_it_ai.types.analyst import SingleEvaluation
 from src.check_it_ai.types.evidence import EvidenceBundle, EvidenceVerdict
 from src.check_it_ai.types.search import SearchResult
@@ -54,8 +54,8 @@ class TestAnalystWriterIntegration:
             }
         )
 
-    @patch("check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
-    @patch("check_it_ai.graph.nodes.fact_analyst.extract_claims")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.extract_claims")
     def test_analyst_output_flows_to_writer(
         self,
         mock_extract_claims,
@@ -109,8 +109,8 @@ class TestAnalystWriterIntegration:
         # Verify writer recognized verdict
         assert writer_delta["writer_output"].verdict == EvidenceVerdict.SUPPORTED
 
-    @patch("check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
-    @patch("check_it_ai.graph.nodes.fact_analyst.extract_claims")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.extract_claims")
     def test_contested_verdict_flows_through(
         self,
         mock_extract_claims,
@@ -161,8 +161,8 @@ class TestAnalystWriterIntegration:
         # Writer should recognize contested verdict
         assert writer_delta["writer_output"].verdict == EvidenceVerdict.CONTESTED
 
-    @patch("check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
-    @patch("check_it_ai.graph.nodes.fact_analyst.extract_claims")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.extract_claims")
     def test_findings_populated_in_bundle(
         self,
         mock_extract_claims,
@@ -205,8 +205,8 @@ class TestAnalystWriterIntegration:
         # Overall should be NOT_SUPPORTED (priority over SUPPORTED)
         assert bundle.overall_verdict == EvidenceVerdict.NOT_SUPPORTED
 
-    @patch("check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
-    @patch("check_it_ai.graph.nodes.fact_analyst.extract_claims")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.extract_claims")
     def test_metadata_preserved_through_pipeline(
         self,
         mock_extract_claims,
@@ -305,8 +305,8 @@ class TestEndToEndStateFlow:
             ),
         ]
 
-    @patch("check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
-    @patch("check_it_ai.graph.nodes.fact_analyst.extract_claims")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.extract_claims")
     def test_full_pipeline_state_consistency(
         self,
         mock_extract_claims,

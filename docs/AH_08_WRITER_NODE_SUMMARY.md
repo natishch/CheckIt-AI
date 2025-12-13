@@ -296,10 +296,9 @@ print(result["writer_output"])     # Full WriterOutput object
 
 ---
 
-## Next Steps
 
 ### Completed: Fact Analyst Node (AH-07)
-The Fact Analyst node has been implemented (see [AH-07 Summary](./AH_07_FACT_ANALYST_NODE_SUMMARY.md)):
+
 
 ```
 Router → Researcher → Fact Analyst → Writer

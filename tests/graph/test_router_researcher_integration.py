@@ -7,10 +7,10 @@ from unittest.mock import patch
 
 import pytest
 
-from check_it_ai.graph.nodes.researcher import researcher_node
-from check_it_ai.graph.nodes.router import router_node
-from check_it_ai.graph.state import AgentState
-from check_it_ai.types import RouterDecision, RouterTrigger, SearchResult
+from src.check_it_ai.graph.nodes.researcher import researcher_node
+from src.check_it_ai.graph.nodes.router import router_node
+from src.check_it_ai.graph.state import AgentState
+from src.check_it_ai.types import RouterDecision, RouterTrigger, SearchResult
 
 
 class TestRouterResearcherIntegration:
@@ -36,7 +36,7 @@ class TestRouterResearcherIntegration:
             ),
         ]
 
-    @patch("check_it_ai.graph.nodes.researcher.google_search")
+    @patch("src.check_it_ai.graph.nodes.researcher.google_search")
     def test_fact_check_route_triggers_researcher(self, mock_google_search, mock_search_results):
         """Test that router decision 'fact_check' successfully triggers researcher node."""
         # Mock Google Search API
@@ -60,7 +60,7 @@ class TestRouterResearcherIntegration:
         # Verify search was executed (3 queries for query expansion)
         assert mock_google_search.call_count == 3
 
-    @patch("check_it_ai.graph.nodes.researcher.google_search")
+    @patch("src.check_it_ai.graph.nodes.researcher.google_search")
     def test_clarify_route_skips_researcher(self, mock_google_search):
         """Test that router decision 'clarify' does not trigger researcher."""
         # Router classifies empty query
@@ -78,7 +78,7 @@ class TestRouterResearcherIntegration:
         # Verify google_search was never called
         mock_google_search.assert_not_called()
 
-    @patch("check_it_ai.graph.nodes.researcher.google_search")
+    @patch("src.check_it_ai.graph.nodes.researcher.google_search")
     def test_out_of_scope_route_skips_researcher(self, mock_google_search):
         """Test that router decision 'out_of_scope' does not trigger researcher."""
         # Router classifies coding request
@@ -95,7 +95,7 @@ class TestRouterResearcherIntegration:
         # Verify google_search was never called
         mock_google_search.assert_not_called()
 
-    @patch("check_it_ai.graph.nodes.researcher.google_search")
+    @patch("src.check_it_ai.graph.nodes.researcher.google_search")
     def test_end_to_end_state_flow(self, mock_google_search, mock_search_results):
         """Test complete state flow from user query through router to researcher."""
         mock_google_search.return_value = mock_search_results
@@ -128,7 +128,7 @@ class TestRouterResearcherIntegration:
         assert len(router_state.search_results) > 0
         assert "router" in router_state.run_metadata
 
-    @patch("check_it_ai.graph.nodes.researcher.google_search")
+    @patch("src.check_it_ai.graph.nodes.researcher.google_search")
     def test_router_metadata_preserved_through_researcher(
         self, mock_google_search, mock_search_results
     ):
@@ -157,7 +157,7 @@ class TestRouterResearcherIntegration:
         ]
         assert router_state.run_metadata["router"]["confidence"] > 0.0
 
-    @patch("check_it_ai.graph.nodes.researcher.google_search")
+    @patch("src.check_it_ai.graph.nodes.researcher.google_search")
     def test_query_expansion_based_on_router_classification(
         self, mock_google_search, mock_search_results
     ):

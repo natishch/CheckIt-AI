@@ -46,6 +46,9 @@ llm-openai = ["langchain-openai>=0.2.0"]
 llm-anthropic = ["langchain-anthropic>=0.2.0"]
 llm-google = ["langchain-google-genai>=2.0.0"]
 
+[project.scripts]
+check-it-ai = "check_it_ai.cli:main"
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"
@@ -81,8 +84,11 @@ addopts = [
     "--strict-config",
 ]
 markers = [
-    "integration: marks tests as integration tests (real API calls, not mocked)",
     "unit: marks tests as unit tests (fast, mocked, no external I/O)",
+    "graph: marks tests for graph nodes and state flow",
+    "llm: marks tests for LLM prompts, providers, and validation",
+    "integration: marks tests as integration tests (real API calls, not mocked)",
+    "e2e: marks tests as end-to-end tests (full pipeline with real APIs)",
 ]
 
 [tool.mypy]

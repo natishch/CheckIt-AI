@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from pydantic import HttpUrl
 
-from check_it_ai.graph.nodes.fact_analyst import (
+from src.check_it_ai.graph.nodes.fact_analyst import (
     SourceCredibilityScorer,
     aggregate_verdicts,
     evaluate_single_pair,
@@ -12,7 +12,7 @@ from check_it_ai.graph.nodes.fact_analyst import (
     fact_analyst_node,
     synthesize_overall_verdict,
 )
-from check_it_ai.graph.state import AgentState
+from src.check_it_ai.graph.state import AgentState
 from src.check_it_ai.types.analyst import ExtractedClaims, SingleEvaluation
 from src.check_it_ai.types.evidence import EvidenceVerdict, Finding
 from src.check_it_ai.types.search import SearchResult
@@ -95,8 +95,8 @@ class TestFactAnalystNode:
         assert bundle.overall_verdict == EvidenceVerdict.INSUFFICIENT
         assert len(bundle.items) == 0
 
-    @patch("check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
-    @patch("check_it_ai.graph.nodes.fact_analyst.extract_claims")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.extract_claims")
     def test_supported_verdict(self, mock_extract_claims, mock_evaluate):
         """Test supported verdict flow with new pipeline."""
         # Mock claim extraction to return single claim
@@ -127,8 +127,8 @@ class TestFactAnalystNode:
         assert bundle.findings[0].verdict == EvidenceVerdict.SUPPORTED
         assert bundle.findings[0].claim == "The moon is made of rock"
 
-    @patch("check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
-    @patch("check_it_ai.graph.nodes.fact_analyst.extract_claims")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.extract_claims")
     def test_multiple_claims_mixed_verdicts(self, mock_extract_claims, mock_evaluate):
         """Test pipeline with multiple claims having different verdicts."""
         # Mock claim extraction to return two claims
@@ -169,8 +169,8 @@ class TestFactAnalystNode:
         assert bundle.findings[0].verdict == EvidenceVerdict.NOT_SUPPORTED
         assert bundle.findings[1].verdict == EvidenceVerdict.SUPPORTED
 
-    @patch("check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
-    @patch("check_it_ai.graph.nodes.fact_analyst.extract_claims")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.evaluate_single_pair")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.extract_claims")
     def test_contested_verdict_detection(self, mock_extract_claims, mock_evaluate):
         """Test that conflicting evidence within same claim produces CONTESTED."""
         mock_extract_claims.return_value = ["The sky is blue"]
@@ -208,8 +208,8 @@ class TestFactAnalystNode:
 class TestClaimExtraction:
     """Test the extract_claims function."""
 
-    @patch("check_it_ai.graph.nodes.fact_analyst.ChatPromptTemplate")
-    @patch("check_it_ai.graph.nodes.fact_analyst.get_analyst_llm")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.ChatPromptTemplate")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.get_analyst_llm")
     def test_extract_single_claim(self, mock_get_llm, mock_prompt_template):
         """Test extraction of a single atomic claim."""
         # Setup mock chain
@@ -221,8 +221,8 @@ class TestClaimExtraction:
         assert result == ["The Earth is round"]
         mock_get_llm.assert_called_once()
 
-    @patch("check_it_ai.graph.nodes.fact_analyst.ChatPromptTemplate")
-    @patch("check_it_ai.graph.nodes.fact_analyst.get_analyst_llm")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.ChatPromptTemplate")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.get_analyst_llm")
     def test_extract_multiple_claims(self, mock_get_llm, mock_prompt_template):
         """Test extraction of multiple claims from compound query."""
         mock_chain = mock_prompt_template.from_messages.return_value.__or__.return_value
@@ -236,7 +236,7 @@ class TestClaimExtraction:
         assert "Einstein invented the light bulb" in result
         assert "Einstein won a Nobel Prize" in result
 
-    @patch("check_it_ai.graph.nodes.fact_analyst.get_analyst_llm")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.get_analyst_llm")
     def test_extract_claims_fallback_on_error(self, mock_get_llm):
         """Test fallback to original query when LLM fails."""
         mock_get_llm.side_effect = Exception("LLM unavailable")
@@ -245,8 +245,8 @@ class TestClaimExtraction:
 
         assert result == ["Some claim to verify"]
 
-    @patch("check_it_ai.graph.nodes.fact_analyst.ChatPromptTemplate")
-    @patch("check_it_ai.graph.nodes.fact_analyst.get_analyst_llm")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.ChatPromptTemplate")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.get_analyst_llm")
     def test_extract_claims_max_five(self, mock_get_llm, mock_prompt_template):
         """Test that extraction respects max 5 claims limit."""
         mock_chain = mock_prompt_template.from_messages.return_value.__or__.return_value
@@ -262,8 +262,8 @@ class TestClaimExtraction:
 class TestEvaluateSinglePair:
     """Test the evaluate_single_pair function."""
 
-    @patch("check_it_ai.graph.nodes.fact_analyst.ChatPromptTemplate")
-    @patch("check_it_ai.graph.nodes.fact_analyst.get_analyst_llm")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.ChatPromptTemplate")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.get_analyst_llm")
     def test_evaluate_supported(self, mock_get_llm, mock_prompt_template):
         """Test evaluation that returns SUPPORTED verdict."""
         mock_chain = mock_prompt_template.from_messages.return_value.__or__.return_value
@@ -280,8 +280,8 @@ class TestEvaluateSinglePair:
         assert result.verdict == "SUPPORTED"
         assert result.confidence == 0.9
 
-    @patch("check_it_ai.graph.nodes.fact_analyst.ChatPromptTemplate")
-    @patch("check_it_ai.graph.nodes.fact_analyst.get_analyst_llm")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.ChatPromptTemplate")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.get_analyst_llm")
     def test_evaluate_not_supported(self, mock_get_llm, mock_prompt_template):
         """Test evaluation that returns NOT_SUPPORTED verdict."""
         mock_chain = mock_prompt_template.from_messages.return_value.__or__.return_value
@@ -298,7 +298,7 @@ class TestEvaluateSinglePair:
         assert result.verdict == "NOT_SUPPORTED"
         assert result.confidence == 0.85
 
-    @patch("check_it_ai.graph.nodes.fact_analyst.get_analyst_llm")
+    @patch("src.check_it_ai.graph.nodes.fact_analyst.get_analyst_llm")
     def test_evaluate_fallback_on_error(self, mock_get_llm):
         """Test fallback when LLM fails."""
         mock_get_llm.side_effect = Exception("LLM unavailable")

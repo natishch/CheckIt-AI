@@ -175,10 +175,10 @@ def build_hallucination_correction_prompt(
         A correction prompt string to send to the LLM.
     """
     return f"""Your previous response contained invalid citations: {sorted(invalid_ids)}
-    
+
     These evidence IDs do NOT exist. The only valid evidence IDs are: {sorted(available_ids)}
-    
+
     Please regenerate your response using ONLY the valid evidence IDs listed above.
     Do not use any citation that is not in the valid list.
-    
+
     Remember to output a JSON object with: answer, confidence, evidence_ids, limitations"""

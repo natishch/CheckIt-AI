@@ -31,8 +31,11 @@ def test_import_state():
 
 def test_run_graph_function():
     """Test that run_graph function exists and is callable."""
-    from src.check_it_ai.graph.graph import run_graph
+    from src.check_it_ai.graph.runner import run_graph
 
+    # run_graph now returns a GraphResult object, not a dict
     result = run_graph("test query")
-    assert isinstance(result, dict)
-    assert "final_answer" in result
+    # Check it's a GraphResult with the expected attributes
+    assert hasattr(result, "final_answer")
+    assert hasattr(result, "confidence")
+    assert hasattr(result, "route")
