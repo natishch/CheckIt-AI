@@ -8,8 +8,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 AgentRoute = Literal["fact_check", "clarify", "out_of_scope"]
 
-"""Configuration module using pydantic-settings for type-safe env variable loading."""
-
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables.
@@ -126,6 +124,10 @@ class Settings(BaseSettings):
         default="local",
         description="LLM provider for writer node: openai, anthropic, google, or local",
     )
+    analyst_llm_provider: Literal["openai", "anthropic", "google", "local"] = Field(
+        default="local",
+        description="LLM provider for writer node: openai, anthropic, google, or local",
+    )
 
     # OpenAI Configuration
     openai_api_key: str = Field(
@@ -191,6 +193,28 @@ class Settings(BaseSettings):
         description="Timeout in seconds for writer LLM API calls",
     )
 
+    # =========================================================================
+    # Analyst LLM Configuration
+    # =========================================================================
+    analyst_llm_temperature: float = Field(
+        default=0.1,
+        ge=0.0,
+        le=1.0,
+        description="Temperature for analyst LLM (low for factual tasks)",
+    )
+    analyst_llm_max_tokens: int = Field(
+        default=512,
+        ge=100,
+        le=2048,
+        description="Maximum tokens for analyst LLM response",
+    )
+    analyst_llm_timeout: int = Field(
+        default=60,
+        ge=10,
+        le=300,
+        description="Timeout in seconds for writer LLM API calls",
+    )
+
     def __init__(self, **kwargs):
         """Initialize settings and create necessary directories."""
         super().__init__(**kwargs)
@@ -201,4 +225,3 @@ class Settings(BaseSettings):
 
 # Global settings instance
 settings = Settings()
-SETTINGS = Settings()

@@ -1,19 +1,219 @@
 """Fact analyst node for evidence synthesis and verification."""
 
-import os
 from typing import ClassVar, Literal, cast
 from urllib.parse import urlparse
 
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
-from pydantic import BaseModel
 
 from check_it_ai.graph.nodes.fact_analyst_check_contradictions import check_contradictions
 from check_it_ai.graph.state import AgentState
-from check_it_ai.types.schemas import EvidenceBundle, EvidenceItem, Finding, SearchResult
 from check_it_ai.utils.logging import setup_logger
+from src.check_it_ai.config import settings
+from src.check_it_ai.llm.providers import get_analyst_llm
+from src.check_it_ai.types.analyst import ExtractedClaims, SingleEvaluation, VerdictResult
+from src.check_it_ai.types.evidence import (
+    EvidenceBundle,
+    EvidenceItem,
+    EvidenceVerdict,
+    Finding,
+)
+from src.check_it_ai.types.search import SearchResult
 
 logger = setup_logger(__name__)
+
+
+# =============================================================================
+# Claim Extraction Prompt
+# =============================================================================
+CLAIM_EXTRACTION_SYSTEM = """You are a fact-checking assistant. Your task is to decompose a user's query into atomic, verifiable claims.
+
+Rules:
+1. Extract 1-5 distinct factual claims from the query
+2. Each claim should be independently verifiable
+3. Remove opinions, questions, and subjective statements
+4. Keep claims concise but complete
+5. If the query is already a single atomic claim, return it as-is
+
+Examples:
+- Input: "Is it true that Einstein invented the light bulb and won a Nobel Prize?"
+  Output: ["Einstein invented the light bulb", "Einstein won a Nobel Prize"]
+
+- Input: "The Earth is flat"
+  Output: ["The Earth is flat"]
+
+- Input: "Did Apple buy Twitter for $50 billion in 2023?"
+  Output: ["Apple bought Twitter", "The acquisition price was $50 billion", "The acquisition occurred in 2023"]
+"""
+
+
+def extract_claims(user_query: str) -> list[str]:
+    """Extract atomic, verifiable claims from a user query using LLM.
+
+    Args:
+        user_query: The user's fact-checking query.
+
+    Returns:
+        List of 1-5 atomic claims extracted from the query.
+        Falls back to [user_query] if extraction fails.
+    """
+    try:
+        llm = get_analyst_llm(settings)
+        structured_llm = llm.with_structured_output(ExtractedClaims)
+
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", CLAIM_EXTRACTION_SYSTEM),
+                ("human", "Extract verifiable claims from: {query}"),
+            ]
+        )
+
+        chain = prompt | structured_llm
+        result = cast(ExtractedClaims, chain.invoke({"query": user_query}))
+
+        logger.info(f"Extracted {len(result.claims)} claims from query: {result.claims}")
+        return result.claims
+
+    except Exception as e:
+        logger.warning(f"Claim extraction failed, using original query: {e}")
+        return [user_query]
+
+
+# =============================================================================
+# Per-Pair Evidence Evaluation
+# =============================================================================
+EVIDENCE_EVAL_SYSTEM = """You are a Fact Analyst evaluating whether a SOURCE SNIPPET supports a CLAIM.
+
+EVALUATION CRITERIA:
+- SUPPORTED: The snippet EXPLICITLY confirms the claim is true
+- NOT_SUPPORTED: The snippet EXPLICITLY contradicts or refutes the claim
+- IRRELEVANT: The snippet doesn't address the claim or lacks sufficient detail
+
+Consider the SOURCE_CREDIBILITY score (0.0-1.0) when assessing confidence:
+- Higher credibility sources (0.7+) warrant higher confidence
+- Lower credibility sources (below 0.5) warrant lower confidence
+
+Be conservative: only mark SUPPORTED/NOT_SUPPORTED if the evidence is clear."""
+
+
+def evaluate_single_pair(
+    claim: str,
+    snippet: str,
+    credibility: float,
+) -> SingleEvaluation:
+    """Evaluate a single (claim, snippet) pair using LLM.
+
+    Args:
+        claim: The atomic claim to verify.
+        snippet: The evidence snippet from a search result.
+        credibility: Normalized credibility score (0.0-1.0) of the source.
+
+    Returns:
+        SingleEvaluation with verdict, confidence, and reasoning.
+    """
+    try:
+        llm = get_analyst_llm(settings)
+        structured_llm = llm.with_structured_output(SingleEvaluation)
+
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", EVIDENCE_EVAL_SYSTEM),
+                ("human", "CLAIM: {claim}\nSNIPPET: {snippet}\nSOURCE_CREDIBILITY: {credibility}"),
+            ]
+        )
+
+        chain = prompt | structured_llm
+        result = cast(
+            SingleEvaluation,
+            chain.invoke(
+                {
+                    "claim": claim,
+                    "snippet": snippet,
+                    "credibility": credibility,
+                }
+            ),
+        )
+
+        logger.debug(
+            f"Evaluation: {result.verdict} ({result.confidence}) - {result.reasoning[:50]}..."
+        )
+        return result
+
+    except Exception as e:
+        logger.warning(f"Per-pair evaluation failed: {e}")
+        return SingleEvaluation(
+            verdict="IRRELEVANT",
+            confidence=0.5,
+            reasoning=f"Evaluation error: {str(e)[:50]}",
+        )
+
+
+# =============================================================================
+# Verdict Aggregation Functions
+# =============================================================================
+def aggregate_verdicts(
+    evaluations: list[tuple[str, SingleEvaluation]],
+) -> tuple[EvidenceVerdict, list[str]]:
+    """Aggregate individual verdicts into final verdict for a claim.
+
+    Args:
+        evaluations: List of (evidence_id, SingleEvaluation) tuples.
+
+    Returns:
+        Tuple of (final_verdict, list of relevant evidence IDs).
+    """
+    supported_ids: list[str] = []
+    not_supported_ids: list[str] = []
+
+    for evidence_id, eval_result in evaluations:
+        if eval_result.verdict == "SUPPORTED":
+            supported_ids.append(evidence_id)
+        elif eval_result.verdict == "NOT_SUPPORTED":
+            not_supported_ids.append(evidence_id)
+        # IRRELEVANT items are ignored
+
+    has_support = len(supported_ids) > 0
+    has_contradiction = len(not_supported_ids) > 0
+
+    # Conflict detection: both support and contradiction present
+    if has_support and has_contradiction:
+        return EvidenceVerdict.CONTESTED, supported_ids + not_supported_ids
+
+    if has_support:
+        return EvidenceVerdict.SUPPORTED, supported_ids
+
+    if has_contradiction:
+        return EvidenceVerdict.NOT_SUPPORTED, not_supported_ids
+
+    return EvidenceVerdict.INSUFFICIENT, []
+
+
+def synthesize_overall_verdict(findings: list[Finding]) -> EvidenceVerdict:
+    """Synthesize overall verdict from all claim findings.
+
+    Priority order: CONTESTED > NOT_SUPPORTED > SUPPORTED > INSUFFICIENT
+
+    Args:
+        findings: List of Finding objects, one per claim.
+
+    Returns:
+        The overall EvidenceVerdict for the query.
+    """
+    if not findings:
+        return EvidenceVerdict.INSUFFICIENT
+
+    verdicts = [f.verdict for f in findings]
+
+    # Priority: CONTESTED > NOT_SUPPORTED > SUPPORTED > INSUFFICIENT
+    if EvidenceVerdict.CONTESTED in verdicts:
+        return EvidenceVerdict.CONTESTED
+
+    if EvidenceVerdict.NOT_SUPPORTED in verdicts:
+        return EvidenceVerdict.NOT_SUPPORTED
+
+    if all(v == EvidenceVerdict.SUPPORTED for v in verdicts):
+        return EvidenceVerdict.SUPPORTED
+
+    return EvidenceVerdict.INSUFFICIENT
 
 
 class SourceCredibilityScorer:
@@ -74,11 +274,25 @@ class SourceCredibilityScorer:
         # Tier 4: Generic / Tier 5: Low Quality (Placeholder for now)
         return cls.SCORE_GENERIC
 
+    # Mapping from integer scores to normalized floats (0.0-1.0) for LLM prompts
+    _SCORE_TO_NORMALIZED: ClassVar[dict[int, float]] = {
+        SCORE_FACT_CHECKER: 0.95,
+        SCORE_GOV_EDU: 0.95,
+        SCORE_NEWS_ORG: 0.70,
+        SCORE_GENERIC: 0.50,
+        SCORE_LOW_QUALITY: 0.30,
+    }
 
-class VerdictResult(BaseModel):
-    verdict: Literal["supported", "not_supported", "contested", "insufficient"]
-    reasoning: str
-    confidence: float
+    @classmethod
+    def score_normalized(cls, result: SearchResult) -> float:
+        """
+        Return credibility as a normalized float (0.0-1.0) for LLM prompts.
+
+        This is useful when passing source credibility to the LLM for
+        confidence weighting in evidence evaluation.
+        """
+        raw_score = cls.score(result)
+        return cls._SCORE_TO_NORMALIZED.get(raw_score, 0.30)
 
 
 class ContentAnalyzer:
@@ -118,7 +332,8 @@ class ContentAnalyzer:
         # 1. Check for Contradictions via LLM
         # Filter high-quality evidence for the check
         high_quality_indices = [
-            i for i, (_, score) in enumerate(scored_results)
+            i
+            for i, (_, score) in enumerate(scored_results)
             if score >= SourceCredibilityScorer.SCORE_GOV_EDU
         ]
 
@@ -134,24 +349,17 @@ class ContentAnalyzer:
             [f"- [{item.display_domain}] {item.snippet}" for item in top_items]
         )
 
-        # Check for API Key
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            logger.warning("OPENAI_API_KEY missing. Returning 'insufficient'.")
-            return "insufficient"
-
         try:
-            llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+            llm = get_analyst_llm(settings)
             structured_llm = llm.with_structured_output(VerdictResult)
             prompt = ChatPromptTemplate.from_template(cls.VERDICT_PROMPT)
 
             chain = prompt | structured_llm
-            result = cast(VerdictResult, chain.invoke({
-                "query": query,
-                "snippets": snippets_text
-            }))
+            result = cast(VerdictResult, chain.invoke({"query": query, "snippets": snippets_text}))
 
-            logger.info(f"LLM Verdict: {result.verdict} (Confidence: {result.confidence}) - {result.reasoning}")
+            logger.info(
+                f"LLM Verdict: {result.verdict} (Confidence: {result.confidence}) - {result.reasoning}"
+            )
 
             # Optional: Enforce a confidence threshold
             if result.confidence < 0.5:
@@ -164,11 +372,20 @@ class ContentAnalyzer:
             return "insufficient"
 
 
-def analyze_facts(state: AgentState) -> dict:
+def fact_analyst_node(state: AgentState) -> dict:
+    """Analyze search results and build evidence bundle.
+
+    Pipeline:
+    1. Extract atomic claims from user query
+    2. Score source credibility
+    3. Build evidence items
+    4. Evaluate each (claim, evidence) pair
+    5. Aggregate into findings
+    6. Synthesize overall verdict
     """
-    Analyze search results and build evidence bundle.
-    """
-    logger.info(f"Analyzing {len(state.search_results)} search results for query: '{state.user_query}'")
+    logger.info(
+        f"Analyzing {len(state.search_results)} search results for query: '{state.user_query}'"
+    )
 
     if not state.search_results:
         logger.warning("No search results to analyze.")
@@ -176,67 +393,95 @@ def analyze_facts(state: AgentState) -> dict:
             "evidence_bundle": EvidenceBundle(
                 items=[],
                 findings=[],
-                overall_verdict="insufficient",
+                overall_verdict=EvidenceVerdict.INSUFFICIENT,
             )
         }
 
-    # 1. Score Results
-    scored_results = []
+    # STAGE 1: Extract atomic claims
+    claims = extract_claims(state.user_query)
+    logger.info(f"Extracted {len(claims)} claims: {claims}")
+
+    # STAGE 2: Score Results
+    scored_results: list[tuple[SearchResult, int, float]] = []
     for result in state.search_results:
         score = SourceCredibilityScorer.score(result)
-        scored_results.append((result, score))
+        credibility = SourceCredibilityScorer.score_normalized(result)
+        scored_results.append((result, score, credibility))
 
     # Sort by score descending
     scored_results.sort(key=lambda x: x[1], reverse=True)
 
-    # 2. Build Evidence Items
+    # STAGE 3: Build Evidence Items
     evidence_items: list[EvidenceItem] = []
-    evidence_ids: list[str] = []
-
-    for idx, (result, _score) in enumerate(scored_results, 1):
-        e_id = f"E{idx}"
+    for idx, (result, _score, _cred) in enumerate(scored_results, 1):
         item = EvidenceItem(
-            id=e_id,
+            id=f"E{idx}",
             title=result.title,
             snippet=result.snippet,
             url=result.url,
             display_domain=result.display_domain,
         )
         evidence_items.append(item)
-        evidence_ids.append(e_id)
 
-    # 3. Determine Verdict
-    verdict = ContentAnalyzer.determine_verdict(evidence_items, scored_results, state.user_query)
+    # STAGE 4: Evaluate each (claim, evidence) pair
+    # Limit to top 5 evidence items to control API costs
+    top_evidence = evidence_items[:5]
+    top_scored = scored_results[:5]
 
-    # 4. Create Finding
-    finding = Finding(
-        claim=state.user_query,
-        verdict=verdict,
-        evidence_ids=evidence_ids,
-    )
+    findings: list[Finding] = []
 
-    # 5. Create Bundle
+    for claim in claims:
+        evaluations: list[tuple[str, SingleEvaluation]] = []
+
+        for item, (_, _, credibility) in zip(top_evidence, top_scored, strict=False):
+            eval_result = evaluate_single_pair(
+                claim=claim,
+                snippet=item.snippet,
+                credibility=credibility,
+            )
+            evaluations.append((item.id, eval_result))
+
+        # STAGE 5: Aggregate verdicts for this claim
+        final_verdict, evidence_ids = aggregate_verdicts(evaluations)
+
+        findings.append(
+            Finding(
+                claim=claim,
+                verdict=final_verdict,
+                evidence_ids=evidence_ids,
+            )
+        )
+
+        logger.debug(f"Claim '{claim[:50]}...' → {final_verdict.value} (evidence: {evidence_ids})")
+
+    # STAGE 6: Synthesize overall verdict
+    overall_verdict = synthesize_overall_verdict(findings)
+
+    # Build Bundle (PRESERVED structure)
     bundle = EvidenceBundle(
         items=evidence_items,
-        findings=[finding],
-        overall_verdict=verdict,
+        findings=findings,
+        overall_verdict=overall_verdict,
     )
 
-    # 6. Update Metadata
+    # Update Metadata
     analysis_metadata = {
+        "claims_extracted": len(claims),
         "total_evidence_count": len(evidence_items),
-        "avg_credibility_score": sum(s for _, s in scored_results) / len(scored_results) if scored_results else 0,
-        "contradiction_detected": verdict == "contested",
+        "findings_count": len(findings),
+        "overall_verdict": overall_verdict.value,
+        "avg_credibility_score": sum(s for _, s, _ in scored_results) / len(scored_results)
+        if scored_results
+        else 0,
         "top_source_domain": scored_results[0][0].display_domain if scored_results else None,
     }
 
-    # Merge with existing run_metadata
     new_metadata = state.run_metadata.copy()
     new_metadata["fact_analyst"] = analysis_metadata
 
-    logger.info(f"Analysis complete. Verdict: {verdict}")
+    logger.info(f"Analysis complete. Verdict: {overall_verdict.value}")
 
     return {
         "evidence_bundle": bundle,
-        "run_metadata": new_metadata
+        "run_metadata": new_metadata,
     }

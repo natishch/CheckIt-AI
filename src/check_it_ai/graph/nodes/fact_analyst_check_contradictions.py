@@ -5,16 +5,21 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
-from check_it_ai.types.schemas import EvidenceItem
 from check_it_ai.utils.logging import setup_logger
+from src.check_it_ai.types.evidence import EvidenceItem
 
 logger = setup_logger(__name__)
 
 
 class ContradictionResult(BaseModel):
     """Schema for contradiction check result."""
-    reasoning: str = Field(..., description="Brief explanation of the contradiction or lack thereof")
-    is_contradiction: bool = Field(..., description="Whether a significant factual contradiction exists")
+
+    reasoning: str = Field(
+        ..., description="Brief explanation of the contradiction or lack thereof"
+    )
+    is_contradiction: bool = Field(
+        ..., description="Whether a significant factual contradiction exists"
+    )
     confidence: int = Field(..., description="Confidence score between 0 and 10")
 
 
@@ -62,12 +67,16 @@ def check_contradictions(
         prompt = ChatPromptTemplate.from_template(CONTRADICTION_PROMPT)
 
         snippets_text = "\n".join(
-            [f"- Source {i+1} ({item.display_domain}): {item.snippet}"
-             for i, item in enumerate(evidence_items)]
+            [
+                f"- Source {i + 1} ({item.display_domain}): {item.snippet}"
+                for i, item in enumerate(evidence_items)
+            ]
         )
 
         chain = prompt | structured_llm
-        result = cast(ContradictionResult, chain.invoke({"query": query, "snippets": snippets_text}))
+        result = cast(
+            ContradictionResult, chain.invoke({"query": query, "snippets": snippets_text})
+        )
 
         # Logic: Yes + Confidence >= 8
         if result.is_contradiction and result.confidence >= 8:
@@ -79,4 +88,3 @@ def check_contradictions(
         return False
 
     return False
-
