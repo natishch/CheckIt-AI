@@ -1,0 +1,8 @@
+pydantic
+python-dotenv
+streamlit
+pytest
+pydantic_settings
+langgraph
+duckduckgo_search
+ddgs

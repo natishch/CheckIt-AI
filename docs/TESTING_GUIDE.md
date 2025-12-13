@@ -16,7 +16,7 @@ uv run pytest tests/ --ignore=tests/integration/
 
 These tests use mocks and don't make real API calls. They're fast and don't use API quota.
 
-**Result:** All 63 unit tests should pass ✅
+**Result:** All 215 tests should pass ✅
 
 ---
 
@@ -77,12 +77,12 @@ uv run pytest tests/integration/ -v -s -m integration
 ## Test Types
 
 ### Unit Tests (Default)
-- **Location:** `tests/unit/`
-- **Speed:** Fast (~0.08s for 63 tests)
+- **Location:** `tests/unit/`, `tests/graph/`, and `tests/llm/`
+- **Speed:** Fast (~7s for 215 tests)
 - **API Calls:** None (uses mocks)
 - **API Keys:** Not required
 - **Quota Usage:** Zero
-- **Run:** `uv run pytest -m unit`
+- **Run:** `uv run pytest`
 
 ### Integration Tests
 - **Location:** `tests/integration/`
@@ -91,6 +91,15 @@ uv run pytest tests/integration/ -v -s -m integration
 - **API Keys:** Required (except DuckDuckGo)
 - **Quota Usage:** ~2-5 queries per test
 - **Run:** `uv run pytest tests/integration/ -v -s -m integration`
+
+### E2E Tests (Router → Researcher Flow)
+- **Location:** `tests/e2e/`
+- **Speed:** Slower (~5-10s depending on network)
+- **API Calls:** Real API calls (Google Search)
+- **API Keys:** Required
+- **Quota Usage:** ~5-10 queries per test
+- **Run:** `uv run pytest tests/e2e/ -v -s`
+- **Tests:** Router classification → Researcher query expansion → Search execution
 
 ---
 
@@ -128,8 +137,10 @@ uv run pytest tests/integration/ -k "fallback" -v -s
 
 ### Unit Tests (Mocked)
 ```
-============================== 63 passed in 0.08s ==============================
+================== 215 passed, 1 skipped in 7.15s ==================
 ```
+
+**Note on Skipped Test:** The test `test_trusted_domains_filtering` is conditionally skipped unless `TRUSTED_DOMAINS_ONLY=true` is set in your `.env` file. This is an optional feature for filtering search results to trusted domains only. The skip is expected behavior.
 
 ### Integration Tests (Real APIs)
 
@@ -288,6 +299,7 @@ Run integration tests **manually** or on a **schedule** (e.g., nightly) with cre
 |-----------|---------|-------|-----------|-------------|
 | **Unit Tests** | `uv run pytest -m unit` | Fast | No | Daily development |
 | **Integration Tests** | `uv run pytest tests/integration/ -v -s` | Slow | Yes | Feature verification |
+| **E2E Tests** | `uv run pytest tests/e2e/ -v -s` | Slow | Yes | Router → Researcher flow |
 | **Specific Feature** | `uv run pytest tests/integration/ -k "keyword"` | Medium | Yes | Testing specific functionality |
 | **Hebrew Fallback** | `uv run pytest -k "hebrew"` | Medium | Yes | Language support validation |
 

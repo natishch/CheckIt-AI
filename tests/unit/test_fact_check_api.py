@@ -6,9 +6,9 @@ from unittest.mock import MagicMock, Mock, patch
 import httpx
 import pytest
 
-from check_it_ai.tools.fact_check_api import FactCheckClient, FactCheckQuotaError
-from check_it_ai.types.schemas import SearchResult
-from check_it_ai.utils.cache import SearchCache
+from src.check_it_ai.tools.fact_check_api import FactCheckClient, FactCheckQuotaError
+from src.check_it_ai.types.search import SearchResult
+from src.check_it_ai.utils.cache import SearchCache
 
 
 class TestFactCheckClient:

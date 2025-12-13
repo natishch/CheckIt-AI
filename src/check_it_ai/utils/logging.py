@@ -4,7 +4,7 @@ import logging
 import sys
 from typing import Any
 
-from check_it_ai.config import settings
+from src.check_it_ai.config import settings
 
 
 class StructuredFormatter(logging.Formatter):

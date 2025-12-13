@@ -4,8 +4,8 @@ from urllib.parse import urlparse
 
 from pydantic import ValidationError
 
-from check_it_ai.types.schemas import SearchResult
-from check_it_ai.utils.logging import setup_logger
+from src.check_it_ai.types.search import SearchResult
+from src.check_it_ai.utils.logging import setup_logger
 
 logger = setup_logger(__name__)
 

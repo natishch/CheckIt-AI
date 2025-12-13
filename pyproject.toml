@@ -15,6 +15,9 @@ dependencies = [
     "fastapi>=0.124.2",
     "httpx>=0.28.1",
     "langchain>=1.1.2",
+    "langchain-anthropic>=1.3.0",
+    "langchain-google-genai>=4.0.0",
+    "langchain-openai>=1.1.1",
     "langgraph>=1.0.4",
     "peft>=0.18.0",
     "pydantic>=2.12.5",
@@ -32,6 +35,21 @@ dev = [
     "pytest>=9.0.1",
     "ruff>=0.14.8",
 ]
+
+[project.optional-dependencies]
+# LLM Provider packages for Writer Node
+# Install with: uv pip install -e ".[llm]" or uv pip install -e ".[llm-openai]"
+llm = [
+    "langchain-openai>=0.2.0",
+    "langchain-anthropic>=0.2.0",
+    "langchain-google-genai>=2.0.0",
+]
+llm-openai = ["langchain-openai>=0.2.0"]
+llm-anthropic = ["langchain-anthropic>=0.2.0"]
+llm-google = ["langchain-google-genai>=2.0.0"]
+
+[project.scripts]
+check-it-ai = "check_it_ai.cli:main"
 
 [tool.ruff]
 line-length = 100
@@ -68,8 +86,11 @@ addopts = [
     "--strict-config",
 ]
 markers = [
-    "integration: marks tests as integration tests (real API calls, not mocked)",
     "unit: marks tests as unit tests (fast, mocked, no external I/O)",
+    "graph: marks tests for graph nodes and state flow",
+    "llm: marks tests for LLM prompts, providers, and validation",
+    "integration: marks tests as integration tests (real API calls, not mocked)",
+    "e2e: marks tests as end-to-end tests (full pipeline with real APIs)",
 ]
 
 [tool.mypy]
