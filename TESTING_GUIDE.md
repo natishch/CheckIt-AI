@@ -92,6 +92,15 @@ uv run pytest tests/integration/ -v -s -m integration
 - **Quota Usage:** ~2-5 queries per test
 - **Run:** `uv run pytest tests/integration/ -v -s -m integration`
 
+### E2E Tests (Router → Researcher Flow)
+- **Location:** `tests/e2e/`
+- **Speed:** Slower (~5-10s depending on network)
+- **API Calls:** Real API calls (Google Search)
+- **API Keys:** Required
+- **Quota Usage:** ~5-10 queries per test
+- **Run:** `uv run pytest tests/e2e/ -v -s`
+- **Tests:** Router classification → Researcher query expansion → Search execution
+
 ---
 
 ## Running Specific Tests
@@ -288,6 +297,7 @@ Run integration tests **manually** or on a **schedule** (e.g., nightly) with cre
 |-----------|---------|-------|-----------|-------------|
 | **Unit Tests** | `uv run pytest -m unit` | Fast | No | Daily development |
 | **Integration Tests** | `uv run pytest tests/integration/ -v -s` | Slow | Yes | Feature verification |
+| **E2E Tests** | `uv run pytest tests/e2e/ -v -s` | Slow | Yes | Router → Researcher flow |
 | **Specific Feature** | `uv run pytest tests/integration/ -k "keyword"` | Medium | Yes | Testing specific functionality |
 | **Hebrew Fallback** | `uv run pytest -k "hebrew"` | Medium | Yes | Language support validation |
 

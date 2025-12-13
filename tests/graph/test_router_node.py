@@ -1,5 +1,6 @@
 from src.check_it_ai.graph.nodes.router import router_node
 from src.check_it_ai.graph.state import AgentState
+from src.check_it_ai.types.schemas import RouterDecision, RouterTrigger
 
 
 class TestRouterNode:
@@ -7,37 +8,37 @@ class TestRouterNode:
         state = AgentState(user_query="   ")
         new_state = router_node(state)
 
-        assert new_state.route == "clarify"
+        assert new_state.route == RouterDecision.CLARIFY
         meta = new_state.run_metadata["router"]
-        assert meta["trigger"] == "empty_query"
-        assert meta["decision"] == "clarify"
+        assert meta["trigger"] == RouterTrigger.EMPTY_QUERY
+        assert meta["decision"] == RouterDecision.CLARIFY
 
     def test_underspecified_query_routes_to_clarify(self):
         state = AgentState(user_query="is it true?")
         new_state = router_node(state)
 
-        assert new_state.route == "clarify"
+        assert new_state.route == RouterDecision.CLARIFY
         meta = new_state.run_metadata["router"]
-        assert meta["trigger"] == "underspecified_query"
-        assert meta["decision"] == "clarify"
+        assert meta["trigger"] == RouterTrigger.UNDERSPECIFIED_QUERY
+        assert meta["decision"] == RouterDecision.CLARIFY
 
     def test_non_historical_intent_routes_to_out_of_scope(self):
         state = AgentState(user_query="write me a poem about WW2")
         new_state = router_node(state)
 
-        assert new_state.route == "out_of_scope"
+        assert new_state.route == RouterDecision.OUT_OF_SCOPE
         meta = new_state.run_metadata["router"]
-        assert meta["trigger"] == "non_historical_intent"
-        assert meta["decision"] == "out_of_scope"
+        assert meta["trigger"] == RouterTrigger.NON_HISTORICAL_INTENT
+        assert meta["decision"] == RouterDecision.OUT_OF_SCOPE
 
     def test_default_routes_to_fact_check(self):
         state = AgentState(user_query="When did the Berlin Wall fall?")
         new_state = router_node(state)
 
-        assert new_state.route == "fact_check"
+        assert new_state.route == RouterDecision.FACT_CHECK
         meta = new_state.run_metadata["router"]
-        assert meta["trigger"] in ["default_fact_check", "explicit_verification"]
-        assert meta["decision"] == "fact_check"
+        assert meta["trigger"] in [RouterTrigger.DEFAULT_FACT_CHECK, RouterTrigger.EXPLICIT_VERIFICATION]
+        assert meta["decision"] == RouterDecision.FACT_CHECK
         assert meta["features"]["starts_like_question"] is True
 
     def test_ambiguous_reference_routes_to_clarify(self):
@@ -46,22 +47,22 @@ class TestRouterNode:
         state = AgentState(user_query="Tell me about this event")
         new_state = router_node(state)
 
-        assert new_state.route == "clarify"
+        assert new_state.route == RouterDecision.CLARIFY
         meta = new_state.run_metadata["router"]
-        assert meta["trigger"] == "ambiguous_reference"
-        assert meta["decision"] == "clarify"
+        assert meta["trigger"] == RouterTrigger.AMBIGUOUS_REFERENCE
+        assert meta["decision"] == RouterDecision.CLARIFY
 
     def test_coding_request_routes_to_out_of_scope_with_intent_type(self):
         # Clearly a coding / implementation request, not historical fact-checking
         state = AgentState(user_query="Write a Python script that prints prime numbers")
         new_state = router_node(state)
 
-        assert new_state.route == "out_of_scope"
+        assert new_state.route == RouterDecision.OUT_OF_SCOPE
         meta = new_state.run_metadata["router"]
 
         # Check trigger and decision (new Pydantic model fields)
-        assert meta["trigger"] == "non_historical_intent"
-        assert meta["decision"] == "out_of_scope"
+        assert meta["trigger"] == RouterTrigger.NON_HISTORICAL_INTENT
+        assert meta["decision"] == RouterDecision.OUT_OF_SCOPE
 
         # More fine-grained category for debugging / UI
         assert meta.get("intent_type") == "coding_request"
@@ -71,11 +72,11 @@ class TestRouterNode:
         state = AgentState(user_query="tell me a joke about Napoleon")
         new_state = router_node(state)
 
-        assert new_state.route == "out_of_scope"
+        assert new_state.route == RouterDecision.OUT_OF_SCOPE
         meta = new_state.run_metadata["router"]
 
-        assert meta["trigger"] == "non_historical_intent"
-        assert meta["decision"] == "out_of_scope"
+        assert meta["trigger"] == RouterTrigger.NON_HISTORICAL_INTENT
+        assert meta["decision"] == RouterDecision.OUT_OF_SCOPE
         assert meta.get("intent_type") == "chat_request"
 
     def test_fact_check_metadata_contains_features(self):
@@ -84,7 +85,7 @@ class TestRouterNode:
         state = AgentState(user_query=q)
         new_state = router_node(state)
 
-        assert new_state.route == "fact_check"
+        assert new_state.route == RouterDecision.FACT_CHECK
         meta = new_state.run_metadata["router"]
 
         # Features dict should exist and contain some basic keys
@@ -108,8 +109,8 @@ class TestRouterNode:
         # Should detect Hebrew language
         assert meta["detected_language"] == "he"
         # Should still route to fact_check (sufficient length)
-        assert new_state.route == "fact_check"
-        assert meta["decision"] == "fact_check"
+        assert new_state.route == RouterDecision.FACT_CHECK
+        assert meta["decision"] == RouterDecision.FACT_CHECK
 
     def test_explicit_verification_question_high_confidence(self):
         """Test that explicit verification questions get high confidence."""
@@ -119,8 +120,8 @@ class TestRouterNode:
 
         meta = new_state.run_metadata["router"]
         # Should trigger explicit verification
-        assert meta["trigger"] == "explicit_verification"
-        assert meta["decision"] == "fact_check"
+        assert meta["trigger"] == RouterTrigger.EXPLICIT_VERIFICATION
+        assert meta["decision"] == RouterDecision.FACT_CHECK
         # Should have high confidence (verification + year + entity)
         assert meta["confidence"] >= 0.85
         # Should detect historical markers
@@ -134,7 +135,7 @@ class TestRouterNode:
         new_state = router_node(state)
 
         meta = new_state.run_metadata["router"]
-        assert meta["decision"] == "fact_check"
+        assert meta["decision"] == RouterDecision.FACT_CHECK
         # Should have medium-high confidence (year + entity + question)
         assert 0.65 <= meta["confidence"] <= 0.85
         assert meta["has_historical_markers"] is True
@@ -147,7 +148,7 @@ class TestRouterNode:
         new_state = router_node(state)
 
         meta = new_state.run_metadata["router"]
-        assert meta["decision"] == "fact_check"
+        assert meta["decision"] == RouterDecision.FACT_CHECK
         # Should have low confidence (base score only)
         assert meta["confidence"] <= 0.5
         assert meta["has_historical_markers"] is False
@@ -161,14 +162,14 @@ class TestRouterNode:
         meta = new_state.run_metadata["router"]
         # Should detect English language
         assert meta["detected_language"] == "en"
-        assert meta["decision"] == "fact_check"
+        assert meta["decision"] == RouterDecision.FACT_CHECK
 
     def test_confidence_included_in_all_routes(self):
         """Test that confidence field is present in all routing decisions."""
         test_cases = [
-            ("   ", "clarify"),  # Empty
-            ("write code", "out_of_scope"),  # Coding
-            ("When did WWII end?", "fact_check"),  # Fact-check
+            ("   ", RouterDecision.CLARIFY),  # Empty
+            ("write code", RouterDecision.OUT_OF_SCOPE),  # Coding
+            ("When did WWII end?", RouterDecision.FACT_CHECK),  # Fact-check
         ]
 
         for query, expected_route in test_cases:
