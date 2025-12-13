@@ -119,6 +119,7 @@ Please read all the documentation files in the docs/ folder to understand the cu
 - docs/AH_03_04_CONFIG_CACHING_GOOGLE_SEARCH.md - Configuration and Google Search tool
 - docs/AH_05_ROUTER_NODE_SUMMARY.md - Router node with confidence scoring and multilingual support
 - docs/AH_06_RESEARCHER_NODE_SUMMARY.md - Researcher node with query expansion and deduplication
+- docs/AH_07_WRITER_NODE_SUMMARY.md - Writer node with few-shot prompting and multi-provider LLM support
 - docs/technical_design.pdf - Complete system architecture
 - docs/tasks_playbook.pdf - Task breakdown and guidance
 

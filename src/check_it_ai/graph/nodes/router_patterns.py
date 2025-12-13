@@ -30,7 +30,9 @@ NON_HISTORICAL_HINTS: dict[str, tuple[str, ...]] = {
     "coding_request": (
         "python code",
         "python script",
-        "write a python script",
+        "python function",
+        "write a python",
+        "write a function",
         "write code",
         "code this",
         "bash script",
@@ -40,6 +42,8 @@ NON_HISTORICAL_HINTS: dict[str, tuple[str, ...]] = {
         "docker compose",
         "sql query",
         "regex for",
+        "javascript function",
+        "java function",
     ),
     "chat_request": (
         "tell me a joke",

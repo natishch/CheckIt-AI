@@ -1,6 +1,6 @@
 from src.check_it_ai.graph.nodes.router import router_node
 from src.check_it_ai.graph.state import AgentState
-from src.check_it_ai.types.schemas import RouterDecision, RouterTrigger
+from src.check_it_ai.types import RouterDecision, RouterTrigger
 
 
 class TestRouterNode:

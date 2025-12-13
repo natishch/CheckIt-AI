@@ -3,18 +3,15 @@
 import pytest
 from pydantic import ValidationError
 
-from src.check_it_ai.types.schemas import (
+from src.check_it_ai.types.evidence import (
     Citation,
     EvidenceBundle,
     EvidenceItem,
-    FinalOutput,
     Finding,
-    RouterDecision,
-    RouterMetadata,
-    RouterTrigger,
-    SearchQuery,
-    SearchResult,
 )
+from src.check_it_ai.types.output import FinalOutput
+from src.check_it_ai.types.router import RouterDecision, RouterMetadata, RouterTrigger
+from src.check_it_ai.types.search import SearchQuery, SearchResult
 
 
 class TestSearchQuery:

@@ -5,3 +5,4 @@ pytest
 pydantic_settings
 langgraph
 duckduckgo_search
+ddgs

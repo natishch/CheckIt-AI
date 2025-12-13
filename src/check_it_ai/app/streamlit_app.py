@@ -5,7 +5,7 @@ import streamlit as st
 
 from src.check_it_ai.config import settings
 from src.check_it_ai.graph.graph import run_graph
-from src.check_it_ai.types.schemas import RouterDecision
+from src.check_it_ai.types.router import RouterDecision
 
 SETTINGS = settings
 
