@@ -14,7 +14,7 @@ from check_it_ai.config import settings
 from check_it_ai.graph.nodes.researcher import researcher_node
 from check_it_ai.graph.nodes.router import router_node
 from check_it_ai.graph.state import AgentState
-from check_it_ai.types.schemas import RouterDecision, RouterTrigger
+from check_it_ai.types import RouterDecision, RouterTrigger
 
 
 @pytest.mark.e2e

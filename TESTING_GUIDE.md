@@ -16,7 +16,7 @@ uv run pytest tests/ --ignore=tests/integration/
 
 These tests use mocks and don't make real API calls. They're fast and don't use API quota.
 
-**Result:** All 104 unit tests should pass ✅
+**Result:** All 215 tests should pass ✅
 
 ---
 
@@ -77,12 +77,12 @@ uv run pytest tests/integration/ -v -s -m integration
 ## Test Types
 
 ### Unit Tests (Default)
-- **Location:** `tests/unit/` and `tests/graph/`
-- **Speed:** Fast (~0.5s for 104 tests)
+- **Location:** `tests/unit/`, `tests/graph/`, and `tests/llm/`
+- **Speed:** Fast (~7s for 215 tests)
 - **API Calls:** None (uses mocks)
 - **API Keys:** Not required
 - **Quota Usage:** Zero
-- **Run:** `uv run pytest -m unit`
+- **Run:** `uv run pytest`
 
 ### Integration Tests
 - **Location:** `tests/integration/`
@@ -137,8 +137,10 @@ uv run pytest tests/integration/ -k "fallback" -v -s
 
 ### Unit Tests (Mocked)
 ```
-============================== 63 passed in 0.08s ==============================
+================== 215 passed, 1 skipped in 7.15s ==================
 ```
+
+**Note on Skipped Test:** The test `test_trusted_domains_filtering` is conditionally skipped unless `TRUSTED_DOMAINS_ONLY=true` is set in your `.env` file. This is an optional feature for filtering search results to trusted domains only. The skip is expected behavior.
 
 ### Integration Tests (Real APIs)
 

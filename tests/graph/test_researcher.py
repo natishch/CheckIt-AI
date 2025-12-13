@@ -10,7 +10,7 @@ from check_it_ai.graph.nodes.researcher import (
     researcher_node,
 )
 from check_it_ai.graph.state import AgentState
-from check_it_ai.types.schemas import SearchResult
+from check_it_ai.types import SearchResult
 
 
 class TestQueryExpansion:

@@ -10,7 +10,7 @@ This node implements the Researcher Agent that:
 from check_it_ai.config import settings
 from check_it_ai.graph.state import AgentState
 from check_it_ai.tools.google_search import google_search
-from check_it_ai.types.schemas import SearchQuery, SearchResult
+from check_it_ai.types import SearchQuery, SearchResult
 from check_it_ai.utils.logging import setup_logger
 
 logger = setup_logger(__name__)
