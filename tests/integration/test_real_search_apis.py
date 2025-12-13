@@ -16,7 +16,7 @@ from src.check_it_ai.config import settings
 from src.check_it_ai.tools.duckduckgo_search import duckduckgo_search
 from src.check_it_ai.tools.fact_check_api import google_fact_check
 from src.check_it_ai.tools.google_search import google_search
-from src.check_it_ai.types.schemas import SearchResult
+from src.check_it_ai.types.search import SearchResult
 
 
 @pytest.mark.integration

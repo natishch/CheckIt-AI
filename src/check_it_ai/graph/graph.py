@@ -8,7 +8,7 @@ from src.check_it_ai.graph.nodes.researcher import researcher_node
 from src.check_it_ai.graph.nodes.router import router_node
 from src.check_it_ai.graph.nodes.writer import writer_node
 from src.check_it_ai.graph.state import AgentState
-from src.check_it_ai.types.schemas import RouterDecision
+from src.check_it_ai.types.router import RouterDecision
 
 
 def build_graph():

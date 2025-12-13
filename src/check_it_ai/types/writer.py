@@ -1,23 +1,14 @@
-from __future__ import annotations
+"""Writer output schema.
 
-import json
-import re
-from typing import TYPE_CHECKING
+This module contains the WriterOutput Pydantic model, which is the structured
+result of the writer node.
+"""
+
+from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from src.check_it_ai.types.schemas import EvidenceVerdict
-
-if TYPE_CHECKING:
-    from src.check_it_ai.graph.state import AgentState
-
-
-def build_writer_prompt(query, evidence):
-    """Stub for missing prompt builder."""
-    return f"Question: {query}\\nEvidence: {evidence}"
-
-
-CITE_RE = re.compile(r"\[E\d+\]")
+from src.check_it_ai.types.evidence import EvidenceVerdict
 
 
 class WriterOutput(BaseModel):
@@ -82,128 +73,3 @@ class WriterOutput(BaseModel):
             "citation validation, useful for debugging."
         ),
     )
-
-
-def _extract_citation_ids(text: str) -> set[str]:
-    """
-    Extract IDs like '[E1]', '[E2]' and return {'E1', 'E2'}.
-    """
-    matches = CITE_RE.findall(text)
-    return {m.strip("[]") for m in matches}
-
-
-def _call_llm(prompt: str) -> str:
-    """
-    Placeholder for HF + PEFT/LoRA call.
-    Ideally, you instruct the model to return JSON with:
-    {
-      "answer": "...",
-      "confidence": 0.8,
-      "evidence_ids": ["E1","E3"],
-      "limitations": "..."
-    }
-    """
-    # TODO: integrate actual HF/PEFT client
-    raise NotImplementedError
-
-
-def _parse_llm_output(raw: str, default_verdict: EvidenceVerdict) -> WriterOutput:
-    """
-    Parse raw model output into WriterOutput.
-    Assumes JSON if possible, otherwise falls back to a minimal structure.
-    """
-    try:
-        data = json.loads(raw)
-        answer = data.get("answer", raw)
-        confidence = float(data.get("confidence", 0.5))
-        evidence_ids = list(data.get("evidence_ids", []))
-        limitations = data.get("limitations", "")
-    except Exception:
-        # Fallback: whole raw text is the answer
-        answer = raw
-        confidence = 0.5
-        evidence_ids = []
-        limitations = ""
-
-    return WriterOutput(
-        answer=answer,
-        confidence=confidence,
-        evidence_ids=evidence_ids,
-        limitations=limitations,
-        verdict=default_verdict,
-        raw_model_output=raw,
-    )
-
-
-def writer_node(state: AgentState) -> AgentState:
-    if not state.evidence_bundle:
-        # No evidence; emit a conservative fallback directly
-        wo = WriterOutput(
-            answer=(
-                "I cannot verify this claim because I could not retrieve any relevant evidence. "
-                "Please refine your question or try again later."
-            ),
-            confidence=0.2,
-            evidence_ids=[],
-            limitations="No evidence bundle available.",
-            verdict="insufficient",
-            citation_valid=True,
-            fallback_used=True,
-            raw_model_output=None,
-        )
-        state.writer_output = wo
-        state.final_answer = wo.answer
-        state.run_metadata["writer"] = {
-            "confidence": wo.confidence,
-            "evidence_ids": wo.evidence_ids,
-            "verdict": wo.verdict,
-            "citation_valid": wo.citation_valid,
-            "fallback_used": wo.fallback_used,
-        }
-        return state
-
-    # Build prompt from evidence
-    prompt = build_writer_prompt(state.user_query, state.evidence_bundle)
-
-    # Call model
-    raw = _call_llm(prompt)
-
-    # Parse structured output
-    default_verdict: EvidenceVerdict = state.evidence_bundle.overall_verdict
-    wo = _parse_llm_output(raw, default_verdict=default_verdict)
-
-    # Validate citations
-    available_ids = {e.id for e in state.evidence_bundle.evidence_items}
-    cited_ids_in_text = _extract_citation_ids(wo.answer)
-    unknown_ids = cited_ids_in_text - available_ids
-
-    # If LLm didn't provide evidence_ids, infer from text
-    if not wo.evidence_ids:
-        wo.evidence_ids = sorted(cited_ids_in_text)
-
-    # Basic citation validity rules
-    citation_valid = bool(cited_ids_in_text) and not unknown_ids
-    wo.citation_valid = citation_valid
-
-    # If citations invalid or empty but evidence exists -> fallback
-    if not wo.citation_valid:
-        wo.fallback_used = True
-        wo.answer = (
-            "I can't safely verify this claim using the retrieved evidence. "
-            "The sources appear insufficient, inconsistent, or the citations are unclear."
-        )
-        wo.confidence = min(wo.confidence, 0.3)
-        wo.evidence_ids = []
-
-    # Update state
-    state.writer_output = wo
-    state.final_answer = wo.answer
-    state.run_metadata["writer"] = {
-        "confidence": wo.confidence,
-        "evidence_ids": wo.evidence_ids,
-        "verdict": wo.verdict,
-        "citation_valid": wo.citation_valid,
-        "fallback_used": wo.fallback_used,
-    }
-
-    return state

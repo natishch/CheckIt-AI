@@ -1,4 +1,4 @@
-#src/check_it_ai/graph/state.py
+# src/check_it_ai/graph/state.py
 from __future__ import annotations
 
 from typing import Any, Literal
@@ -6,12 +6,8 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.check_it_ai.types.clarify import ClarifyRequest
-from src.check_it_ai.types.schemas import (
-    Citation,
-    EvidenceBundle,
-    SearchQuery,
-    SearchResult,
-)
+from src.check_it_ai.types.evidence import Citation, EvidenceBundle
+from src.check_it_ai.types.search import SearchQuery, SearchResult
 from src.check_it_ai.types.writer import WriterOutput
 
 AgentRoute = Literal["fact_check", "clarify", "out_of_scope"]

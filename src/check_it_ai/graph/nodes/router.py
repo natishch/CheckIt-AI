@@ -15,7 +15,7 @@ from src.check_it_ai.graph.nodes.router_patterns import (
 )
 from src.check_it_ai.graph.state import AgentState
 from src.check_it_ai.types.clarify import ClarifyRequest
-from src.check_it_ai.types.schemas import RouterDecision, RouterMetadata, RouterTrigger
+from src.check_it_ai.types.router import RouterDecision, RouterMetadata, RouterTrigger
 
 SETTINGS = settings
 logger = logging.getLogger(__name__)

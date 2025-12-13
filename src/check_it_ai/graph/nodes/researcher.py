@@ -1,7 +1,7 @@
 """Researcher agent for Google Search API integration."""
 
 from src.check_it_ai.graph.state import AgentState
-from src.check_it_ai.types.schemas import SearchResult
+from src.check_it_ai.types.search import SearchResult
 
 
 def researcher_node(state: AgentState) -> dict:

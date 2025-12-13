@@ -1,7 +1,7 @@
 """Fact analyst node for evidence synthesis."""
 
 from src.check_it_ai.graph.state import AgentState
-from src.check_it_ai.types.schemas import EvidenceBundle
+from src.check_it_ai.types.evidence import EvidenceBundle
 
 
 def fact_analyst_node(state: AgentState) -> dict:
