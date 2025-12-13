@@ -1,6 +1,7 @@
 # tests/graph/test_router_clarify_contract.py
 from src.check_it_ai.graph.nodes.router import router_node
 from src.check_it_ai.graph.state import AgentState
+from src.check_it_ai.types.schemas import RouterDecision, RouterTrigger
 
 
 class TestSearchQuery:
@@ -10,12 +11,12 @@ class TestSearchQuery:
         state = AgentState(user_query="   ")
         new_state = router_node(state)
 
-        assert new_state.route == "clarify"
+        assert new_state.route == RouterDecision.CLARIFY
         assert "router" in new_state.run_metadata
 
         meta = new_state.run_metadata["router"]
-        assert meta["trigger"] == "empty_query"
-        assert meta["decision"] == "clarify"
+        assert meta["trigger"] == RouterTrigger.EMPTY_QUERY
+        assert meta["decision"] == RouterDecision.CLARIFY
 
         cr = new_state.clarify_request
         assert cr is not None
@@ -30,11 +31,11 @@ class TestSearchQuery:
         state = AgentState(user_query="is it true?")
         new_state = router_node(state)
 
-        assert new_state.route == "clarify"
+        assert new_state.route == RouterDecision.CLARIFY
 
         meta = new_state.run_metadata["router"]
-        assert meta["trigger"] == "underspecified_query"
-        assert meta["decision"] == "clarify"
+        assert meta["trigger"] == RouterTrigger.UNDERSPECIFIED_QUERY
+        assert meta["decision"] == RouterDecision.CLARIFY
 
         cr = new_state.clarify_request
         assert cr is not None
@@ -50,12 +51,12 @@ class TestSearchQuery:
         state = AgentState(user_query="Tell me about this event")
         new_state = router_node(state)
 
-        assert new_state.route == "clarify"
+        assert new_state.route == RouterDecision.CLARIFY
 
         meta = new_state.run_metadata["router"]
         # Should be ambiguous_reference for vague pronoun
-        assert meta["trigger"] == "ambiguous_reference"
-        assert meta["decision"] == "clarify"
+        assert meta["trigger"] == RouterTrigger.AMBIGUOUS_REFERENCE
+        assert meta["decision"] == RouterDecision.CLARIFY
 
         cr = new_state.clarify_request
         assert cr is not None
@@ -66,10 +67,10 @@ class TestSearchQuery:
         state = AgentState(user_query="Write a Python script that prints all primes")
         new_state = router_node(state)
 
-        assert new_state.route == "out_of_scope"
+        assert new_state.route == RouterDecision.OUT_OF_SCOPE
         meta = new_state.run_metadata["router"]
-        assert meta["trigger"] == "non_historical_intent"
-        assert meta["decision"] == "out_of_scope"
+        assert meta["trigger"] == RouterTrigger.NON_HISTORICAL_INTENT
+        assert meta["decision"] == RouterDecision.OUT_OF_SCOPE
         assert "coding" in meta.get("intent_type", "") or "coding" in meta["reasoning"].lower()
         assert new_state.clarify_request is None
 
@@ -77,8 +78,8 @@ class TestSearchQuery:
         state = AgentState(user_query="When did the Berlin Wall fall?")
         new_state = router_node(state)
 
-        assert new_state.route == "fact_check"
+        assert new_state.route == RouterDecision.FACT_CHECK
         meta = new_state.run_metadata["router"]
-        assert meta["trigger"] in ["default_fact_check", "explicit_verification"]
-        assert meta["decision"] == "fact_check"
+        assert meta["trigger"] in [RouterTrigger.DEFAULT_FACT_CHECK, RouterTrigger.EXPLICIT_VERIFICATION]
+        assert meta["decision"] == RouterDecision.FACT_CHECK
         assert new_state.clarify_request is None
