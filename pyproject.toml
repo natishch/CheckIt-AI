@@ -32,6 +32,18 @@ dev = [
     "ruff>=0.14.8",
 ]
 
+[project.optional-dependencies]
+# LLM Provider packages for Writer Node
+# Install with: uv pip install -e ".[llm]" or uv pip install -e ".[llm-openai]"
+llm = [
+    "langchain-openai>=0.2.0",
+    "langchain-anthropic>=0.2.0",
+    "langchain-google-genai>=2.0.0",
+]
+llm-openai = ["langchain-openai>=0.2.0"]
+llm-anthropic = ["langchain-anthropic>=0.2.0"]
+llm-google = ["langchain-google-genai>=2.0.0"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"

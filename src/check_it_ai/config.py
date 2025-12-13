@@ -1,9 +1,14 @@
 """Configuration module using pydantic-settings for type-safe env variable loading."""
 
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+AgentRoute = Literal["fact_check", "clarify", "out_of_scope"]
+
+"""Configuration module using pydantic-settings for type-safe env variable loading."""
 
 
 class Settings(BaseSettings):
@@ -76,6 +81,33 @@ class Settings(BaseSettings):
         ge=1,
         description="Time-to-live for cached search results in hours",
     )
+    router_debug: bool = True  # controls extra logging & UI debug panel
+    offline_mode: bool = False  # optional, for researcher/offline demos
+    trusted_domains_only: bool = False  # optional, for researcher's site: filters
+
+    # Router Configuration (Phase 3: AH-05)
+    router_current_events_years_ago: int = Field(
+        default=2,
+        ge=0,
+        le=10,
+        description=(
+            "How many years back to consider 'current events' (out of scope). "
+            "Set to 0 to allow all recent events. "
+            "Default: 2 (events from last 2 years rejected)"
+        ),
+    )
+    router_min_query_words: int = Field(
+        default=3,
+        ge=1,
+        le=20,
+        description="Minimum words required for valid query (used for underspecified detection)",
+    )
+    router_min_query_chars: int = Field(
+        default=8,
+        ge=1,
+        le=100,
+        description="Minimum characters required for valid query (used for underspecified detection)",
+    )
 
     # Language Configuration
     default_language: str = Field(
@@ -85,6 +117,78 @@ class Settings(BaseSettings):
     fallback_language: str = Field(
         default="en",
         description="Fallback language code when no results found in default language",
+    )
+
+    # =========================================================================
+    # Writer LLM Configuration
+    # =========================================================================
+    writer_llm_provider: Literal["openai", "anthropic", "google", "local"] = Field(
+        default="local",
+        description="LLM provider for writer node: openai, anthropic, google, or local",
+    )
+
+    # OpenAI Configuration
+    openai_api_key: str = Field(
+        default="",
+        description="OpenAI API key (required if writer_llm_provider='openai')",
+    )
+    openai_model: str = Field(
+        default="gpt-4o-mini",
+        description="OpenAI model name (e.g., 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo')",
+    )
+
+    # Anthropic Configuration
+    anthropic_api_key: str = Field(
+        default="",
+        description="Anthropic API key (required if writer_llm_provider='anthropic')",
+    )
+    anthropic_model: str = Field(
+        default="claude-3-5-sonnet-20241022",
+        description="Anthropic model name (e.g., 'claude-3-5-sonnet-20241022', 'claude-3-haiku-20240307')",
+    )
+
+    # Google Generative AI Configuration
+    google_genai_api_key: str = Field(
+        default="",
+        description="Google Generative AI API key (required if writer_llm_provider='google')",
+    )
+    google_genai_model: str = Field(
+        default="gemini-1.5-flash",
+        description="Google Generative AI model name (e.g., 'gemini-1.5-pro', 'gemini-1.5-flash')",
+    )
+
+    # Local LLM Configuration (LM Studio / Ollama / vLLM)
+    local_llm_base_url: str = Field(
+        default="http://127.0.0.1:1234/v1",
+        description="Base URL for local OpenAI-compatible API (LM Studio, Ollama, vLLM)",
+    )
+    local_llm_model: str = Field(
+        default="local-model",
+        description="Model name for local LLM (depends on your local server setup)",
+    )
+    local_llm_api_key: str = Field(
+        default="not-needed",
+        description="API key for local LLM (usually 'not-needed' for local servers)",
+    )
+
+    # Common LLM Settings
+    writer_llm_temperature: float = Field(
+        default=0.3,
+        ge=0.0,
+        le=2.0,
+        description="Temperature for writer LLM (0.0=deterministic, higher=creative)",
+    )
+    writer_llm_max_tokens: int = Field(
+        default=1024,
+        ge=100,
+        le=8192,
+        description="Maximum tokens for writer LLM response",
+    )
+    writer_llm_timeout: int = Field(
+        default=60,
+        ge=10,
+        le=300,
+        description="Timeout in seconds for writer LLM API calls",
     )
 
     def __init__(self, **kwargs):
@@ -97,3 +201,4 @@ class Settings(BaseSettings):
 
 # Global settings instance
 settings = Settings()
+SETTINGS = Settings()

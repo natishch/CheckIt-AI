@@ -3,7 +3,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 # --- CONFIGURATION ---
 root: Path = Path(__file__).resolve().parent
@@ -12,9 +12,9 @@ file_meta_path: Path = root / "impl-tasks-with-priority-and-dependencies.json"
 file_prompts_path: Path = root / "impl-tasks-with-prompts.json"
 
 
-def load_json(file_path: Path) -> List[Dict[str, Any]]:
+def load_json(file_path: Path) -> list[dict[str, Any]]:
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             data = json.load(f)
             return data.get("tasks", [])
     except FileNotFoundError:
@@ -29,9 +29,7 @@ def merge_tasks(
     meta_tasks: list[dict[str, str | list[str]]], prompt_tasks: list[dict[str, str]]
 ) -> list[dict[str, str | list[str]]]:
     merged: list[dict[str, str | list[str]]] = []
-    print(
-        f"🔄 Merging {len(meta_tasks)} meta tasks with {len(prompt_tasks)} prompt tasks..."
-    )
+    print(f"🔄 Merging {len(meta_tasks)} meta tasks with {len(prompt_tasks)} prompt tasks...")
 
     # Assume same length and same order
     for i, meta in enumerate(meta_tasks):
@@ -43,9 +41,7 @@ def merge_tasks(
                 "developer_guide_prompt": match.get(
                     "developer_guide_prompt", "No prompt provided."
                 ),
-                "claude_init_prompt": match.get(
-                    "claude_init_prompt", "No init prompt provided."
-                ),
+                "claude_init_prompt": match.get("claude_init_prompt", "No init prompt provided."),
             }
             merged.append(combined)
         else:
@@ -80,7 +76,9 @@ def create_issue(task: dict[str, str | list[str]]):
     # Developer Prompt (Dropdown)
     dev_prompt = task.get("developer_guide_prompt")
     if dev_prompt:
-        body += "<details>\n<summary><b>👨‍💻 Developer Guide Prompt (Cursor/Windsurf)</b></summary>\n\n"
+        body += (
+            "<details>\n<summary><b>👨‍💻 Developer Guide Prompt (Cursor/Windsurf)</b></summary>\n\n"
+        )
         body += "> Copy this into your AI Chat to generate the code logic.\n\n"
         body += "```text\n"
         body += dev_prompt

@@ -4,11 +4,11 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from check_it_ai.config import settings
-from check_it_ai.tools._http_utils import QuotaExceededError, make_api_request
-from check_it_ai.types.schemas import SearchResult
-from check_it_ai.utils.cache import SearchCache, search_cache
-from check_it_ai.utils.logging import setup_logger
+from src.check_it_ai.config import settings
+from src.check_it_ai.tools._http_utils import QuotaExceededError, make_api_request
+from src.check_it_ai.types.search import SearchResult
+from src.check_it_ai.utils.cache import SearchCache, search_cache
+from src.check_it_ai.utils.logging import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -155,9 +155,7 @@ def _parse_results(raw_results: list[dict[str, Any]]) -> list[SearchResult]:
             # Skip invalid results
             continue
 
-    logger.debug(
-        f"Parsed {len(parsed_results)} valid results out of {len(raw_results)} total"
-    )
+    logger.debug(f"Parsed {len(parsed_results)} valid results out of {len(raw_results)} total")
 
     return parsed_results
 

@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from check_it_ai.tools.duckduckgo_search import duckduckgo_search
-from check_it_ai.types.schemas import SearchResult
+from src.check_it_ai.tools.duckduckgo_search import duckduckgo_search
+from src.check_it_ai.types.search import SearchResult
 
 
 class TestDuckDuckGoSearch:

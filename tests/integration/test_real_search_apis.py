@@ -12,11 +12,11 @@ Skip with: pytest tests/ --ignore=tests/integration/
 
 import pytest
 
-from check_it_ai.config import settings
-from check_it_ai.tools.duckduckgo_search import duckduckgo_search
-from check_it_ai.tools.fact_check_api import google_fact_check
-from check_it_ai.tools.google_search import google_search
-from check_it_ai.types.schemas import SearchResult
+from src.check_it_ai.config import settings
+from src.check_it_ai.tools.duckduckgo_search import duckduckgo_search
+from src.check_it_ai.tools.fact_check_api import google_fact_check
+from src.check_it_ai.tools.google_search import google_search
+from src.check_it_ai.types.search import SearchResult
 
 
 @pytest.mark.integration
@@ -137,10 +137,10 @@ class TestRealDuckDuckGoSearch:
         results = duckduckgo_search(query, num_results=5)
 
         if not results:
-             # Fallback to another broad query if first one fails
-             print("   ⚠️  No results for 'Python programming', trying 'Google'...")
-             query = "Google"
-             results = duckduckgo_search(query, num_results=5)
+            # Fallback to another broad query if first one fails
+            print("   ⚠️  No results for 'Python programming', trying 'Google'...")
+            query = "Google"
+            results = duckduckgo_search(query, num_results=5)
 
         assert isinstance(results, list)
         assert len(results) > 0, "Should return at least one result"
@@ -164,9 +164,9 @@ class TestRealDuckDuckGoSearch:
         results = duckduckgo_search(query, num_results=3)
 
         if not results:
-             # Fallback to another common query if first one fails (flakiness mitigation)
-             query = "חדשות" # "News"
-             results = duckduckgo_search(query, num_results=3)
+            # Fallback to another common query if first one fails (flakiness mitigation)
+            query = "חדשות"  # "News"
+            results = duckduckgo_search(query, num_results=3)
 
         assert len(results) > 0, "Should return results for Hebrew query"
 
