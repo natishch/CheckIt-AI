@@ -14,14 +14,14 @@ import pytest
 from dotenv import load_dotenv
 from pydantic import HttpUrl
 
-from check_it_ai.graph.nodes.fact_analyst import (
+from src.check_it_ai.config import settings
+from src.check_it_ai.graph.nodes.fact_analyst import (
     ContentAnalyzer,
     evaluate_single_pair,
     extract_claims,
     fact_analyst_node,
 )
-from check_it_ai.graph.state import AgentState
-from src.check_it_ai.config import settings
+from src.check_it_ai.graph.state import AgentState
 from src.check_it_ai.llm.providers import check_provider_health
 from src.check_it_ai.types.evidence import EvidenceItem, EvidenceVerdict
 from src.check_it_ai.types.search import SearchResult

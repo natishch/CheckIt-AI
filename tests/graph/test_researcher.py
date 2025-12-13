@@ -4,13 +4,13 @@ from unittest.mock import patch
 
 import pytest
 
-from check_it_ai.graph.nodes.researcher import (
+from src.check_it_ai.graph.nodes.researcher import (
     deduplicate_by_url,
     expand_query,
     researcher_node,
 )
-from check_it_ai.graph.state import AgentState
-from check_it_ai.types import SearchResult
+from src.check_it_ai.graph.state import AgentState
+from src.check_it_ai.types import SearchResult
 
 
 class TestQueryExpansion:
@@ -208,7 +208,7 @@ class TestResearcherNode:
             ),
         ]
 
-    @patch("check_it_ai.graph.nodes.researcher.google_search")
+    @patch("src.check_it_ai.graph.nodes.researcher.google_search")
     def test_researcher_node_basic_flow(self, mock_google_search, mock_search_results):
         """Test basic flow: expansion → execution → deduplication."""
         # Mock google_search to return deterministic results
@@ -229,7 +229,7 @@ class TestResearcherNode:
         # Verify search results are populated
         assert len(result_state_dict["search_results"]) > 0
 
-    @patch("check_it_ai.graph.nodes.researcher.google_search")
+    @patch("src.check_it_ai.graph.nodes.researcher.google_search")
     def test_researcher_node_deduplication(self, mock_google_search):
         """Test that deduplication removes duplicate URLs from multiple queries."""
         # Mock google_search to return results with duplicates
@@ -309,8 +309,8 @@ class TestResearcherNode:
         url1_result = next(r for r in result_state_dict["search_results"] if "url1" in str(r.url))
         assert "Query1" in url1_result.title
 
-    @patch("check_it_ai.graph.nodes.researcher.google_search")
-    @patch("check_it_ai.graph.nodes.researcher.settings")
+    @patch("src.check_it_ai.graph.nodes.researcher.google_search")
+    @patch("src.check_it_ai.graph.nodes.researcher.settings")
     def test_researcher_node_trusted_mode(self, mock_settings, mock_google_search, mock_search_results):
         """Test that trusted mode appends site filters to queries."""
         # Enable trusted_domains_only mode
@@ -334,7 +334,7 @@ class TestResearcherNode:
                 for domain in ["wikipedia.org", "britannica.com", ".edu", ".gov"]
             )
 
-    @patch("check_it_ai.graph.nodes.researcher.google_search")
+    @patch("src.check_it_ai.graph.nodes.researcher.google_search")
     def test_researcher_node_empty_query(self, mock_google_search):
         """Test that empty query returns empty results."""
         # Create initial state with empty query
@@ -350,7 +350,7 @@ class TestResearcherNode:
         # Verify google_search was never called
         mock_google_search.assert_not_called()
 
-    @patch("check_it_ai.graph.nodes.researcher.google_search")
+    @patch("src.check_it_ai.graph.nodes.researcher.google_search")
     def test_researcher_node_handles_api_errors(self, mock_google_search):
         """Test that node continues even when some API calls fail."""
         # Mock google_search to fail on first call, succeed on others

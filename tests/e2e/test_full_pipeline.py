@@ -8,14 +8,14 @@ Run with: uv run pytest tests/e2e/test_full_pipeline.py -v -s -m e2e
 
 import pytest
 
-from check_it_ai.config import settings
-from check_it_ai.graph.nodes.fact_analyst import fact_analyst_node
-from check_it_ai.graph.nodes.researcher import researcher_node
-from check_it_ai.graph.nodes.router import router_node
-from check_it_ai.graph.nodes.writer import writer_node
-from check_it_ai.graph.state import AgentState
-from check_it_ai.types import RouterDecision
+from src.check_it_ai.config import settings
+from src.check_it_ai.graph.nodes.fact_analyst import fact_analyst_node
+from src.check_it_ai.graph.nodes.researcher import researcher_node
+from src.check_it_ai.graph.nodes.router import router_node
+from src.check_it_ai.graph.nodes.writer import writer_node
+from src.check_it_ai.graph.state import AgentState
 from src.check_it_ai.llm.providers import check_provider_health
+from src.check_it_ai.types import RouterDecision
 
 
 def _has_google_api() -> bool:

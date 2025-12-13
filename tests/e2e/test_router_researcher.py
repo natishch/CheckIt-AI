@@ -10,11 +10,11 @@ import time
 
 import pytest
 
-from check_it_ai.config import settings
-from check_it_ai.graph.nodes.researcher import researcher_node
-from check_it_ai.graph.nodes.router import router_node
-from check_it_ai.graph.state import AgentState
-from check_it_ai.types import RouterDecision, RouterTrigger
+from src.check_it_ai.config import settings
+from src.check_it_ai.graph.nodes.researcher import researcher_node
+from src.check_it_ai.graph.nodes.router import router_node
+from src.check_it_ai.graph.state import AgentState
+from src.check_it_ai.types import RouterDecision, RouterTrigger
 
 
 @pytest.mark.e2e
@@ -67,7 +67,7 @@ class TestRouterResearcherE2E:
         # Print sample result for verification
         if search_results:
             first_result = search_results[0]
-            print(f"\nSample result:")
+            print("\nSample result:")
             print(f"  Title: {first_result.title}")
             print(f"  Snippet: {first_result.snippet[:100]}...")
             print(f"  URL: {first_result.url}")
@@ -112,7 +112,7 @@ class TestRouterResearcherE2E:
         assert router_state.route == RouterDecision.CLARIFY
         assert router_state.run_metadata["router"]["trigger"] == RouterTrigger.EMPTY_QUERY
 
-        print(f"\n✓ Router: Correctly routed empty query to 'clarify'")
+        print("\n✓ Router: Correctly routed empty query to 'clarify'")
 
         # In real graph, researcher would not be called
         should_call_researcher = router_state.route == RouterDecision.FACT_CHECK
@@ -132,7 +132,7 @@ class TestRouterResearcherE2E:
         assert router_state.run_metadata["router"]["trigger"] == RouterTrigger.NON_HISTORICAL_INTENT
         assert router_state.run_metadata["router"]["intent_type"] == "coding_request"
 
-        print(f"\n✓ Router: Correctly identified coding request")
+        print("\n✓ Router: Correctly identified coding request")
 
         # Verify researcher would not be called
         should_call_researcher = router_state.route == RouterDecision.FACT_CHECK
@@ -173,7 +173,7 @@ class TestRouterResearcherE2E:
         queries = [q.query for q in researcher_delta["search_queries"]]
         assert any("site:" in q for q in queries), "Site filters should be present in queries"
 
-        print(f"\n✓ Trusted domains mode active")
+        print("\n✓ Trusted domains mode active")
         print(f"  Sample query: {queries[0]}")
 
         # Verify results come from trusted domains

@@ -5,8 +5,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
-from check_it_ai.utils.logging import setup_logger
 from src.check_it_ai.types.evidence import EvidenceItem
+from src.check_it_ai.utils.logging import setup_logger
 
 logger = setup_logger(__name__)
 

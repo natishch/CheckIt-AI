@@ -5,10 +5,9 @@ from urllib.parse import urlparse
 
 from langchain_core.prompts import ChatPromptTemplate
 
-from check_it_ai.graph.nodes.fact_analyst_check_contradictions import check_contradictions
-from check_it_ai.graph.state import AgentState
-from check_it_ai.utils.logging import setup_logger
 from src.check_it_ai.config import settings
+from src.check_it_ai.graph.nodes.fact_analyst_check_contradictions import check_contradictions
+from src.check_it_ai.graph.state import AgentState
 from src.check_it_ai.llm.providers import get_analyst_llm
 from src.check_it_ai.types.analyst import ExtractedClaims, SingleEvaluation, VerdictResult
 from src.check_it_ai.types.evidence import (
@@ -18,6 +17,7 @@ from src.check_it_ai.types.evidence import (
     Finding,
 )
 from src.check_it_ai.types.search import SearchResult
+from src.check_it_ai.utils.logging import setup_logger
 
 logger = setup_logger(__name__)
 
