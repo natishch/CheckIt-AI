@@ -6,15 +6,9 @@ from unittest.mock import MagicMock, Mock, patch
 import httpx
 import pytest
 
-<<<<<<< HEAD
-from check_it_ai.tools.google_search import GoogleSearchClient
-from check_it_ai.types.schemas import SearchResult
-from check_it_ai.utils.cache import SearchCache
-=======
 from src.check_it_ai.tools.google_search import GoogleSearchClient
 from src.check_it_ai.types.search import SearchResult
 from src.check_it_ai.utils.cache import SearchCache
->>>>>>> main
 
 
 class TestGoogleSearchClient:

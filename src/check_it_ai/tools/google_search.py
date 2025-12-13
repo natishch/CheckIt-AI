@@ -71,13 +71,12 @@ def google_search(
     cached_results = cache.get(query, num_results)
     if cached_results is not None:
         logger.info(
-            f"Using cached results for query: {query}",
-            extra={"num_results": len(cached_results)},
+            f"🎯 CACHE HIT: '{query[:50]}...' ({len(cached_results)} results)",
         )
         return _parse_results(cached_results)
 
-    # Step 2: Make API request
-    logger.info(f"Fetching search results from Google API: {query}")
+    # Step 2: Make API request (cache miss)
+    logger.info(f"📡 CACHE MISS - Fetching from Google API: '{query[:50]}...'")
     results = _fetch_from_google(query, num_results, api_key, cse_id)
 
     # Step 3: Cache the results

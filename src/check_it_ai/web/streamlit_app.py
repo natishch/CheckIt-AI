@@ -1,6 +1,5 @@
 """Streamlit Chat UI for Check-It AI fact verification system."""
 
-
 import httpx
 import streamlit as st
 

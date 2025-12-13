@@ -1,10 +1,7 @@
 import random
 
-from check_it_ai.types.schemas import (
-    Citation,
-    EvidenceItem,
-    FinalOutput,
-)
+from src.check_it_ai.types.evidence import Citation, EvidenceItem
+from src.check_it_ai.types.output import FinalOutput
 
 
 def create_evidence_item(

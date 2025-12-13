@@ -8,6 +8,12 @@ from src.check_it_ai.types.analyst import (
     SingleEvaluation,
     VerdictResult,
 )
+from src.check_it_ai.types.api import (
+    ChatRequest,
+    ChatResponse,
+    CheckRequest,
+    HealthResponse,
+)
 from src.check_it_ai.types.evidence import (
     Citation,
     EvidenceBundle,
@@ -54,4 +60,9 @@ __all__ = [
     "NodeEndEvent",
     "GraphCompleteEvent",
     "StreamEvent",
+    # API
+    "ChatRequest",
+    "ChatResponse",
+    "CheckRequest",
+    "HealthResponse",
 ]

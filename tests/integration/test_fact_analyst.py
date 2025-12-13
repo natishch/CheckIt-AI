@@ -310,13 +310,15 @@ class TestContentAnalyzerLegacy:
         """Helper to create evidence items from snippets."""
         items = []
         for i, snippet in enumerate(snippets, 1):
-            items.append(EvidenceItem(
-                id=f"E{i}",
-                title=f"Source {i}",
-                snippet=snippet,
-                url=HttpUrl(f"http://example{i}.com/article"),
-                display_domain=f"example{i}.com"
-            ))
+            items.append(
+                EvidenceItem(
+                    id=f"E{i}",
+                    title=f"Source {i}",
+                    snippet=snippet,
+                    url=HttpUrl(f"http://example{i}.com/article"),
+                    display_domain=f"example{i}.com",
+                )
+            )
         return items
 
     def test_verdict_supported_conversational(self):
@@ -324,7 +326,7 @@ class TestContentAnalyzerLegacy:
         query = "I heard the Titanic sank in 1912. Is that true?"
         snippets = [
             "The RMS Titanic sank in the North Atlantic Ocean on April 15, 1912.",
-            "More than 1,500 people died when the Titanic sank in 1912."
+            "More than 1,500 people died when the Titanic sank in 1912.",
         ]
         evidence = self._create_evidence(snippets)
 
@@ -336,7 +338,7 @@ class TestContentAnalyzerLegacy:
         query = "Someone told me Napoleon died in battle at Waterloo. I think that's right."
         snippets = [
             "Napoleon was defeated at Waterloo but died in exile on Saint Helena in 1821.",
-            "His death in 1821 on the island of St. Helena was likely due to stomach cancer."
+            "His death in 1821 on the island of St. Helena was likely due to stomach cancer.",
         ]
         evidence = self._create_evidence(snippets)
 

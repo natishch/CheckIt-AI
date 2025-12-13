@@ -1,20 +1,21 @@
 import { useState } from 'react';
+import { TrustEngine } from './components/TrustEngine';
 import { StandardChat } from './components/StandardChat';
 
 /**
  * Main App Component
  *
- * Holds the mode state for future dual-mode support:
+ * Holds the mode state for dual-mode support:
+ * - 'trust': New Trust Engine interface (default)
  * - 'standard': ChatGPT-style professional interface
- * - 'animated': Fun retro computer with duck animations (coming soon)
  */
 function App() {
-  const [mode, setMode] = useState('standard');
+  const [mode, setMode] = useState('trust');
 
   return (
-    <div className="w-full h-screen">
+    <div className="w-full h-screen bg-zinc-950">
+      {mode === 'trust' && <TrustEngine />}
       {mode === 'standard' && <StandardChat />}
-      {/* Future: {mode === 'animated' && <AnimatedChat />} */}
     </div>
   );
 }

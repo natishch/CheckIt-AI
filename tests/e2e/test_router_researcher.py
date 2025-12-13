@@ -60,9 +60,7 @@ class TestRouterResearcherE2E:
         search_results = researcher_delta["search_results"]
         assert all(result.url for result in search_results), "All results should have URLs"
         assert all(result.title for result in search_results), "All results should have titles"
-        assert all(
-            result.snippet for result in search_results
-        ), "All results should have snippets"
+        assert all(result.snippet for result in search_results), "All results should have snippets"
 
         # Print sample result for verification
         if search_results:
