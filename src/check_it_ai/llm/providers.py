@@ -1,15 +1,15 @@
-"""LLM Provider Factory for Writer Node.
+"""LLM Provider Factory for Writer and Analyst Nodes.
 
-This module provides a factory function to instantiate the appropriate LLM
+This module provides factory functions to instantiate the appropriate LLM
 based on configuration. Supports OpenAI, Anthropic, Google, and local
 (LM Studio/Ollama/vLLM) providers.
 
 Usage:
-    from src.check_it_ai.llm.providers import get_writer_llm
+    from src.check_it_ai.llm.providers import get_writer_llm, get_analyst_llm
     from src.check_it_ai.config import settings
 
-    llm = get_writer_llm(settings)
-    response = llm.invoke("Your prompt here")
+    writer_llm = get_writer_llm(settings)
+    analyst_llm = get_analyst_llm(settings)
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ class LLMProviderError(Exception):
 
 
 def get_writer_llm(settings: Settings) -> BaseChatModel:
-    """Create and return the appropriate LLM instance based on settings.
+    """Create and return the LLM instance for the Writer node.
 
     Args:
         settings: Application settings containing LLM configuration.
@@ -41,17 +41,52 @@ def get_writer_llm(settings: Settings) -> BaseChatModel:
         LLMProviderError: If the provider is unknown or required API key is missing.
         ImportError: If required provider package is not installed.
     """
-    provider = settings.writer_llm_provider.lower()
+    return _get_llm(
+        settings,
+        provider=settings.writer_llm_provider,
+        temperature=settings.writer_llm_temperature,
+        max_tokens=settings.writer_llm_max_tokens,
+        timeout=settings.writer_llm_timeout,
+    )
+
+
+def get_analyst_llm(settings: Settings) -> BaseChatModel:
+    """Create and return the LLM instance for the Fact Analyst node.
+
+    Uses the same provider as writer but with analyst-specific temperature
+    and max_tokens settings (lower temperature for factual tasks).
+
+    Args:
+        settings: Application settings containing LLM configuration.
+
+    Returns:
+        A LangChain BaseChatModel instance configured for the analyst node.
+
+    Raises:
+        LLMProviderError: If the provider is unknown or required API key is missing.
+        ImportError: If required provider package is not installed.
+    """
+    return _get_llm(
+        settings,
+        provider=settings.analyst_llm_provider,
+        temperature=settings.analyst_llm_temperature,
+        max_tokens=settings.analyst_llm_max_tokens,
+        timeout=settings.analyst_llm_timeout,
+    )
+
+
+def _get_llm(settings: Settings, provider: str, **kwargs) -> BaseChatModel:
+    """Internal factory that creates the LLM for the specified node type."""
 
     match provider:
         case "openai":
-            return _create_openai_llm(settings)
+            return _create_openai_llm(settings, **kwargs)
         case "anthropic":
-            return _create_anthropic_llm(settings)
+            return _create_anthropic_llm(settings, **kwargs)
         case "google":
-            return _create_google_llm(settings)
+            return _create_google_llm(settings, **kwargs)
         case "local":
-            return _create_local_llm(settings)
+            return _create_local_llm(settings, **kwargs)
         case _:
             raise LLMProviderError(
                 f"Unknown LLM provider: '{provider}'. "
@@ -59,7 +94,12 @@ def get_writer_llm(settings: Settings) -> BaseChatModel:
             )
 
 
-def _create_openai_llm(settings: Settings) -> BaseChatModel:
+def _create_openai_llm(
+    settings: Settings,
+    temperature: float,
+    max_tokens: int,
+    timeout: int,
+) -> BaseChatModel:
     """Create OpenAI ChatGPT instance."""
     if not settings.openai_api_key:
         raise LLMProviderError(
@@ -78,13 +118,18 @@ def _create_openai_llm(settings: Settings) -> BaseChatModel:
     return ChatOpenAI(
         api_key=settings.openai_api_key,
         model=settings.openai_model,
-        temperature=settings.writer_llm_temperature,
-        max_tokens=settings.writer_llm_max_tokens,
-        timeout=settings.writer_llm_timeout,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        timeout=timeout,
     )
 
 
-def _create_anthropic_llm(settings: Settings) -> BaseChatModel:
+def _create_anthropic_llm(
+    settings: Settings,
+    temperature: float,
+    max_tokens: int,
+    timeout: int,
+) -> BaseChatModel:
     """Create Anthropic Claude instance."""
     if not settings.anthropic_api_key:
         raise LLMProviderError(
@@ -103,13 +148,18 @@ def _create_anthropic_llm(settings: Settings) -> BaseChatModel:
     return ChatAnthropic(
         api_key=settings.anthropic_api_key,
         model=settings.anthropic_model,
-        temperature=settings.writer_llm_temperature,
-        max_tokens=settings.writer_llm_max_tokens,
-        timeout=settings.writer_llm_timeout,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        timeout=timeout,
     )
 
 
-def _create_google_llm(settings: Settings) -> BaseChatModel:
+def _create_google_llm(
+    settings: Settings,
+    temperature: float,
+    max_tokens: int,
+    timeout: int,  # noqa: ARG001 - Google API doesn't use timeout but kept for interface consistency
+) -> BaseChatModel:
     """Create Google Generative AI (Gemini) instance."""
     if not settings.google_genai_api_key:
         raise LLMProviderError(
@@ -128,12 +178,14 @@ def _create_google_llm(settings: Settings) -> BaseChatModel:
     return ChatGoogleGenerativeAI(
         google_api_key=settings.google_genai_api_key,
         model=settings.google_genai_model,
-        temperature=settings.writer_llm_temperature,
-        max_output_tokens=settings.writer_llm_max_tokens,
+        temperature=temperature,
+        max_output_tokens=max_tokens,
     )
 
 
-def _create_local_llm(settings: Settings) -> BaseChatModel:
+def _create_local_llm(
+    settings: Settings, temperature: float, max_tokens: int, timeout: int
+) -> BaseChatModel:
     """Create local LLM instance (LM Studio / Ollama / vLLM).
 
     Uses OpenAI-compatible API endpoint, which is supported by:
@@ -154,9 +206,9 @@ def _create_local_llm(settings: Settings) -> BaseChatModel:
         base_url=settings.local_llm_base_url,
         api_key=settings.local_llm_api_key,
         model=settings.local_llm_model,
-        temperature=settings.writer_llm_temperature,
-        max_tokens=settings.writer_llm_max_tokens,
-        timeout=settings.writer_llm_timeout,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        timeout=timeout,
     )
 
 
