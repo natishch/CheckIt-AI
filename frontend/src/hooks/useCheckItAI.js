@@ -91,9 +91,11 @@ export const useCheckItAI = () => {
         content: response.data.answer,
         citations: response.data.citations,
         evidence: response.data.evidence,
+        route: response.data.route,
         metadata: {
           ...response.data.metadata,
           confidence: response.data.metadata?.confidence || 0,
+          route: response.data.route,
         },
         timestamp: new Date().toISOString(),
       };

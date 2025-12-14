@@ -1,0 +1,193 @@
+{
+  "demo_questions": {
+    "verified_true": {
+      "description": "Claims that should return VERIFIED TRUE (supported)",
+      "questions": [
+        "Did the Titanic sink in 1912?",
+        "Was George Washington the first president of the United States?",
+        "Did World War II end in 1945?",
+        "Is the Great Wall of China a UNESCO World Heritage Site?",
+        "Did Neil Armstrong walk on the moon in 1969?",
+        "Was Albert Einstein awarded the Nobel Prize in Physics?",
+        "Did the Roman Empire fall in 476 AD?",
+        "Is Mount Everest the highest mountain on Earth?",
+        "Did Leonardo da Vinci paint the Mona Lisa?",
+        "Was the Declaration of Independence signed in 1776?"
+      ]
+    },
+    "verified_false": {
+      "description": "Claims that should return VERIFIED FALSE (not_supported)",
+      "questions": [
+        "Did Napoleon Bonaparte win the Battle of Waterloo?",
+        "Was the Great Wall of China built in the 20th century?",
+        "Did Christopher Columbus discover America in 1592?",
+        "Was Einstein the inventor of the telephone?",
+        "Did the Titanic sink on its 10th voyage?",
+        "Was Julius Caesar the first Roman Emperor?",
+        "Did humans land on Mars in 1999?",
+        "Was Shakespeare born in London?",
+        "Did World War I start in 1920?",
+        "Is the Earth flat?"
+      ]
+    },
+    "uncertain": {
+      "description": "Claims that may return UNCERTAIN (mixed/insufficient evidence)",
+      "questions": [
+        "Did Cleopatra have blue eyes?",
+        "Was King Arthur a real historical figure?",
+        "Did Vikings reach North America before Columbus?",
+        "Was the Shroud of Turin created in medieval times?",
+        "Did Atlantis actually exist?",
+        "Was Robin Hood a real person?",
+        "Did ancient Egyptians use electricity?",
+        "Was there a female Pope in the Middle Ages?"
+      ]
+    },
+    "out_of_scope": {
+      "description": "Queries that should be routed as OUT OF SCOPE",
+      "subcategories": {
+        "chat_requests": [
+          "How are you today?",
+          "Hello, nice to meet you!",
+          "What's up?",
+          "Thank you for your help",
+          "Who are you?",
+          "What can you do?"
+        ],
+        "coding_requests": [
+          "Write me a Python function to sort a list",
+          "Give me a JavaScript code for a calculator",
+          "Create a SQL query to find duplicates",
+          "Write a bash script to backup files"
+        ],
+        "creative_requests": [
+          "Write me a poem about history",
+          "Create a story about ancient Rome",
+          "Compose a song about the Renaissance"
+        ],
+        "opinion_requests": [
+          "What's the best programming language?",
+          "Which is better, Mac or Windows?",
+          "Should I learn Python or JavaScript?",
+          "What do you think about AI?"
+        ],
+        "realtime_requests": [
+          "What's the weather today?",
+          "What is the current stock price of Apple?",
+          "What's the latest news?",
+          "What's the Bitcoin price right now?"
+        ]
+      }
+    },
+    "multi_claim": {
+      "description": "Complex queries with multiple claims to verify",
+      "questions": [
+        "Napoleon was short and lost the Battle of Waterloo",
+        "Einstein invented the theory of relativity and was born in Germany",
+        "The Titanic sank in 1912 after hitting an iceberg on its maiden voyage",
+        "Columbus discovered America in 1492 and was Italian",
+        "World War II started in 1939 and ended with the atomic bombing of Japan"
+      ]
+    },
+    "historical_figures": {
+      "description": "Claims about famous historical figures",
+      "questions": [
+        "Was Cleopatra Egyptian?",
+        "Did Abraham Lincoln free the slaves?",
+        "Was Mozart a child prodigy?",
+        "Did Genghis Khan create the largest land empire?",
+        "Was Marie Curie the first woman to win a Nobel Prize?",
+        "Did Alexander the Great die young?",
+        "Was Queen Victoria the longest-reigning British monarch?",
+        "Did Galileo invent the telescope?"
+      ]
+    },
+    "common_myths": {
+      "description": "Popular myths and misconceptions to debunk",
+      "questions": [
+        "Did Vikings wear horned helmets?",
+        "Is the Great Wall of China visible from space?",
+        "Was Napoleon short for his time?",
+        "Did medieval people think the Earth was flat?",
+        "Did Einstein fail math in school?",
+        "Did Marie Antoinette say 'Let them eat cake'?",
+        "Were gladiator fights always to the death?",
+        "Did cowboys really have quick-draw duels?"
+      ]
+    },
+    "verification_patterns": {
+      "description": "Explicit verification question patterns",
+      "questions": [
+        "Is it true that the pyramids were built by slaves?",
+        "Verify whether the moon landing was real",
+        "True or false: Benjamin Franklin discovered electricity",
+        "Did humans really evolve from apes?",
+        "Confirm if the French Revolution started in 1789",
+        "Is it accurate that dinosaurs and humans coexisted?"
+      ]
+    },
+    "edge_cases": {
+      "description": "Edge cases and tricky queries",
+      "subcategories": {
+        "too_short": [
+          "True?",
+          "History",
+          "What?"
+        ],
+        "ambiguous": [
+          "Did it happen?",
+          "Is that true?",
+          "When did this occur?"
+        ],
+        "recent_events": [
+          "Who won the 2024 US election?",
+          "What happened in Ukraine today?"
+        ]
+      }
+    }
+  },
+  "recommended_demo_flow": [
+    {
+      "step": 1,
+      "category": "verified_true",
+      "question": "Did the Titanic sink in 1912?",
+      "expected": "VERIFIED TRUE"
+    },
+    {
+      "step": 2,
+      "category": "verified_false",
+      "question": "Did Vikings wear horned helmets?",
+      "expected": "VERIFIED FALSE"
+    },
+    {
+      "step": 3,
+      "category": "uncertain",
+      "question": "Was King Arthur a real historical figure?",
+      "expected": "UNCERTAIN"
+    },
+    {
+      "step": 4,
+      "category": "out_of_scope",
+      "question": "Write me a Python function to sort a list",
+      "expected": "OUT OF SCOPE"
+    },
+    {
+      "step": 5,
+      "category": "out_of_scope",
+      "question": "What's the weather today?",
+      "expected": "OUT OF SCOPE"
+    },
+    {
+      "step": 6,
+      "category": "common_myths",
+      "question": "Is the Great Wall of China visible from space?",
+      "expected": "VERIFIED FALSE"
+    },
+    {
+      "step": 7,
+      "category": "multi_claim",
+      "question": "Einstein invented the theory of relativity and was born in Germany",
+      "expected": "VERIFIED TRUE"
+    }
+  ]
+}
