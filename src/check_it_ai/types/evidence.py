@@ -101,7 +101,7 @@ class EvidenceBundle(BaseModel):
     - `items` is kept as an alias for backward compatibility.
     """
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
 
     evidence_items: list[EvidenceItem] = Field(
         default_factory=list,

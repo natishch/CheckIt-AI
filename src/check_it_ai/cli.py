@@ -134,7 +134,9 @@ def format_result_pretty(result: GraphResult, file: TextIO = sys.stdout) -> None
                 colorize(f"  Total time: {meta['total_time_seconds']:.2f}s", Colors.DIM), file=file
             )
         if "search_results_count" in meta:
-            print(colorize(f"  Search results: {meta['search_results_count']}", Colors.DIM), file=file)
+            print(
+                colorize(f"  Search results: {meta['search_results_count']}", Colors.DIM), file=file
+            )
         print(file=file)
 
     print(colorize("=" * 60, Colors.DIM), file=file)

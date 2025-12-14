@@ -83,6 +83,12 @@ class Settings(BaseSettings):
     offline_mode: bool = False  # optional, for researcher/offline demos
     trusted_domains_only: bool = False  # optional, for researcher's site: filters
 
+    # API Server Configuration
+    use_mock: bool = Field(
+        default=False,
+        description="Use mock service instead of real run_graph for UI development",
+    )
+
     # Router Configuration (Phase 3: AH-05)
     router_current_events_years_ago: int = Field(
         default=2,

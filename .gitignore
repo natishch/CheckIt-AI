@@ -206,4 +206,24 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-/frontend
+# Node.js / npm / React / Vite
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Build outputs
+dist/
+dist-ssr/
+*.local
+
+# Editor directories
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+
+# Cache
+.cache/
+cache/

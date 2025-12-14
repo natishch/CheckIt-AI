@@ -79,6 +79,9 @@ class TestSearchQuery:
 
         assert new_state.route == RouterDecision.FACT_CHECK
         meta = new_state.run_metadata["router"]
-        assert meta["trigger"] in [RouterTrigger.DEFAULT_FACT_CHECK, RouterTrigger.EXPLICIT_VERIFICATION]
+        assert meta["trigger"] in [
+            RouterTrigger.DEFAULT_FACT_CHECK,
+            RouterTrigger.EXPLICIT_VERIFICATION,
+        ]
         assert meta["decision"] == RouterDecision.FACT_CHECK
         assert new_state.clarify_request is None

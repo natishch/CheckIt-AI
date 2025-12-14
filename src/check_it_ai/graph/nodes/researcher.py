@@ -7,6 +7,8 @@ This node implements the Researcher Agent that:
 4. Deduplicates results by URL (keeps highest-ranked occurrence)
 """
 
+import time
+
 from src.check_it_ai.config import settings
 from src.check_it_ai.graph.state import AgentState
 from src.check_it_ai.tools.google_search import google_search
@@ -137,7 +139,8 @@ def researcher_node(state: AgentState) -> dict:
         SearchQuery(query=q, max_results=settings.max_search_results) for q in expanded_queries
     ]
 
-    # Step 2: Execute Searches
+    # Step 2: Execute Searches (with timing)
+    search_start_time = time.time()
     all_results = []
     for i, search_query in enumerate(search_queries, start=1):
         try:
@@ -155,16 +158,19 @@ def researcher_node(state: AgentState) -> dict:
             # Continue with other queries even if one fails
             continue
 
+    search_elapsed_ms = (time.time() - search_start_time) * 1000
+
     # Step 3: Deduplicate by URL
     deduplicated_results = deduplicate_by_url(all_results)
 
     logger.info(
-        f"Research complete: {len(deduplicated_results)} unique results from {len(expanded_queries)} queries",
+        f"⏱️ Research complete in {search_elapsed_ms:.0f}ms: {len(deduplicated_results)} unique results from {len(expanded_queries)} queries",
         extra={
             "user_query": user_query,
             "total_results": len(all_results),
             "unique_results": len(deduplicated_results),
             "queries_executed": len(search_queries),
+            "search_time_ms": round(search_elapsed_ms),
         },
     )
 
